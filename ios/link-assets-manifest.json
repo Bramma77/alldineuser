@@ -1,0 +1,45 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/Assets/fonts/ZillaSlab-Bold.ttf",
+      "sha1": "a09a0c7bf703ae70b5a6caac6b232ae31f9d0b1f"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-BoldItalic.ttf",
+      "sha1": "510a556add1efe2ef007b0eeb98bfb8aa9c32ca3"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-Italic.ttf",
+      "sha1": "d20164f89feda74a2e780f7792991e006af15c9f"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-Light.ttf",
+      "sha1": "2413d58a629a08286f5ec3b325827087189060d6"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-LightItalic.ttf",
+      "sha1": "15ce0c52bcf792a43e1b052b0ea843347ec45676"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-Medium.ttf",
+      "sha1": "0c73948eaff6a8080a669069009dc54fc9b73992"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-MediumItalic.ttf",
+      "sha1": "af90da6eb3e7ba6e36f13c9dcd88786f983c0b3f"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-Regular.ttf",
+      "sha1": "d4d5b3b9cdb0cd88c2fc9f1777ab73163bbc18f4"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-SemiBold.ttf",
+      "sha1": "0ecfe0448469518cbdcbb2815c4a919eebaab5d3"
+    },
+    {
+      "path": "src/Assets/fonts/ZillaSlab-SemiBoldItalic.ttf",
+      "sha1": "de839051cb240e550169091c23a705aa09982640"
+    }
+  ]
+}
