@@ -1,76 +1,156 @@
-import React from 'react';
-import {View,Text,TextInput, StyleSheet,TouchableOpacity,FlatList} from 'react-native'
+import React, {useEffect, useRef, useState} from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  BackHandler,
+  Alert,
+} from 'react-native';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {useFocusEffect} from '@react-navigation/native';
+import LottieView from 'lottie-react-native';
 import Colors from '../Utilities/Colors';
-import Fonts from '../Utilities/Fonts';
 
+const AdminDashboard = ({navigation}) => {
+  const handleLogout = async () => {
+    // await AsyncStorage.removeItem('userToken');
+    navigation.navigate('Login');
+  };
 
-const AdminDashboard=({navigation,route})=>{
-  
-    
+  const handleOrderStatus = () => {
+    // Add product functionality
+    navigation.navigate('OrderStatus');
+  };
 
-  
+  const handleStockAvailability = () => {
+    // Status functionality
+    navigation.navigate('Availability');
+  };
 
-    return(
-        <View style={{flex:1}}>
-            <View style={{height:55,borderWidth:0,justifyContent:'center',backgroundColor:Colors.orange}}>
-                
-                <Text style={{fontSize:18,fontFamily:Colors.orange,marginLeft:20,color:'white',fontFamily:Fonts.Bold}}>Admin Dashboard</Text>
-            </View>
+  const handleToken = () => {
+    // Notification functionality
+    navigation.navigate('Token');
+  };
 
-            {/* <View style={{margin:20}}>
-                <Text>Hotel name</Text>
-                <TextInput
-                style={{height:50,borderWidth:1,borderRadius:10}}
-                />
-                <Text>Hotel no</Text>
-                 <TextInput
-                style={{height:50,borderWidth:1,borderRadius:10}}
-                />
-                
-
-            </View> */}
-            <View style={{marginTop:20}}>
-          <TouchableOpacity onPress={()=>navigation.navigate('Hotels')}>
-            <View style={Styles.Container}>
-                <Text style={Styles.Text}>Orders</Text>
-            </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={()=>navigation.navigate('AvailabilityList')}>
-            <View style={Styles.Container}>
-            <Text style={Styles.Text}>Availability</Text>
-
-            </View>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={()=>navigation.navigate('Token')}>
-            <View style={Styles.Container}>
-            <Text style={Styles.Text}>Token</Text>
-            </View>
-            </TouchableOpacity>
-            <View style={Styles.Container}>
-            <Text style={Styles.Text}>Logout</Text>
-            </View>
-
-            </View>
-
+  return (
+    <View style={{flex: 1, backgroundColor: 'white'}}>
+      <LottieView
+        style={{width: 250, height: 250, alignSelf: 'center'}}
+        source={require('../Assets/Animations/Admin.json')}
+        autoPlay
+        loop
+      />
+      <View style={styles.container}>
+        <View style={styles.topContainer}>
+          <TouchableOpacity style={styles.button} onPress={handleOrderStatus}>
+            <FontAwesome5
+              style={{marginTop: 35}}
+              name="box-open"
+              size={50}
+              color="black"
+            />
+            <Text style={styles.buttonText}>Orders</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleStockAvailability}>
+            <FontAwesome5
+              style={{marginTop: 35}}
+              name="chart-bar"
+              size={50}
+              color="black"
+            />
+            <Text style={styles.buttonText}>Availability</Text>
+          </TouchableOpacity>
         </View>
-    )
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity style={styles.button} onPress={handleToken}>
+            <FontAwesome5
+              style={{marginTop: 35}}
+              name="plus"
+              size={50}
+              color="black"
+            />
+            <Text style={styles.buttonText}>Token</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleLogout}>
+            <FontAwesome5
+              style={{marginTop: 35}}
+              name="sign-out-alt"
+              size={50}
+              color="black"
+            />
+            <Text style={styles.buttonText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+};
 
-}
 export default AdminDashboard;
-const Styles=StyleSheet.create({
-    Text:{
-        fontSize:16,fontFamily:Fonts.Bold,color:'white'
 
-    },
-    Container:{
-        height:80,borderWidth:1,
-        margin:10,
-        borderRadius:20,
-        alignItems:'center',
-        justifyContent:'center',
-        
-        backgroundColor:Colors.orange
-
-    }
-
-})
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  topContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  bottomContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  button: {
+    alignItems: 'center',
+    height: 150,
+    width: 150,
+    backgroundColor: Colors.orange,
+    margin: 10,
+    borderRadius: 100,
+    elevation: 10,
+  },
+  buttonText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  notificationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 180,
+    marginRight: 10,
+  },
+  notificationCount: {
+    backgroundColor: 'red',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginLeft: -8,
+  },
+  notificationText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 50,
+    backgroundColor: 'white',
+    elevation: 10,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '500',
+    color: 'black',
+    marginLeft: 10,
+  },
+});

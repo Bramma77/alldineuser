@@ -1,38 +1,212 @@
-import React from "react";
-import { Text,View ,Image,TouchableOpacity} from "react-native";
-;
+import React, {useState, useEffect} from 'react';
+import {Text, View, Image, TouchableOpacity, StyleSheet} from 'react-native';
 import Entypo from 'react-native-vector-icons/Entypo';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Octicons from 'react-native-vector-icons/Octicons';
+import auth from '@react-native-firebase/auth';
+import {
+  responsiveHeight,
+  responsiveWidth,
+} from 'react-native-responsive-dimensions';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {database, getWishlist} from './addtoWishlist';
+import {useCart} from '../Provider/Provider';
 
+const Restaurants = ({item, onPress}) => {
+  const [isHeartFilled, setIsHeartFilled] = useState(false);
+  const [Dataview, setDataview] = useState([]);
+  const {Wishlistdata, getResponseWishlist} = useCart();
 
-const Restaurants=({item,onPress})=>{
-    return(
-        <TouchableOpacity onPress={onPress}>
-        <View style={{height:150,width:150,borderWidth:0,margin:10}}>
-        <View style={{flexDirection:'row',borderRadius:20,alignItems:'center'}}>
-         
-          
-            <Image source={{uri:item.DownloadUrl}} style={{height:150,width:150,borderRadius:10}}/>
-            <View style={{width:'100%',alignItems:'flex-end',position:'absolute',right:10,top:10,height:20,width:20,alignItems:'center',justifyContent:'center',backgroundColor:'white',borderRadius:10}}>
-                <TouchableOpacity>
-            <Entypo name='heart-outlined' size={18} color={'red'} style={{}} />
-            </TouchableOpacity>
-            </View>
-           
-            <View style={{marginLeft:10}}>
-            <Text style={{fontSize:22,color:'black',fontFamily:Fonts.Bold,margin:2}}>{item.Restaurantname}</Text>
-            <Text numberOfLines={1} style={{margin:2}}>Juices,Pastas,Beverages</Text>
-            <Text numberOfLines={1} style={{margin:2}}>Kilpauk</Text>
-            <View style={{flexDirection:'row',alignItems:'center',margin:2}}>
-            <View style={{height:18,width:18,borderRadius:20,backgroundColor:Colors.orange,alignItems:'center',justifyContent:'center'}}>
-            <Entypo name='star' color={'white'} size={17}/>
-            </View>
-            <Text style={{marginLeft:5}}>3.5</Text>
-            </View>
-            </View>
-            </View>
+  useEffect(() => {
+    // if (item && item.Dishes) {
 
-        </View>
+    //  setDataview(formattedData);
+    finaldata();
+  }, []);
+
+  const finaldata = () => {
+    // console.log('fianldata', item);
+    if (item && item.Dishes) {
+      const formattedData = Object.keys(item.Dishes).map(dish => ({
+        key: dish,
+        ...item.Dishes[dish],
+      }));
+      // console.log('forma', formattedData);
+      setDataview(formattedData);
+    }
+  };
+
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <View style={styles.container}>
+        <Image style={styles.image} source={{uri: item.DownloadUrl}} />
+        <TouchableOpacity
+          style={styles.heartIcon}
+          onPress={async () => {
+            if (Wishlistdata?.includes(item.key)) {
+              await database.removeFromWishlist(item.key);
+              // getResponseWishlist();
+            } else {
+              await database.addtowish(item.key);
+              // getResponseWishlist();
+            }
+          }}>
+          <Entypo
+            name={Wishlistdata?.includes(item.key) ? 'heart' : 'heart-outlined'}
+            size={30}
+            color={'red'}
+          />
         </TouchableOpacity>
-    )
-}
+        <View style={styles.timerContainer}>
+          <View style={styles.timerContent}>
+            <MaterialIcons name={'timer'} size={18} color={'green'} />
+            <Text style={styles.timerText}>27 mins</Text>
+          </View>
+        </View>
+        <View style={styles.headerContainer}>
+          <Text numberOfLines={2} style={styles.headerText}>
+            {item.Restaurantname}
+          </Text>
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingText}>4.5</Text>
+            <FontAwesome name={'star'} size={12} color={'white'} />
+          </View>
+        </View>
+        <View style={styles.cuisineContainer}>
+          {Dataview?.slice(0, 2).map((item, index) => (
+            <View
+              key={item.key}
+              style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Octicons
+                name={'dot-fill'}
+                size={12}
+                color={'gray'}
+                style={styles.cuisineIcon}
+              />
+              <Text numberOfLines={1} style={styles.cuisineText}>
+                {item.DishName}
+              </Text>
+            </View>
+          ))}
+          <Text>.....</Text>
+          {/* 
+          <Text style={styles.cuisineText}>Pastas</Text>
+          <Octicons
+            name={'dot-fill'}
+            size={12}
+            color={'gray'}
+            style={styles.cuisineIcon}
+          />
+          <Text style={styles.cuisineText}>Beverages</Text> */}
+        </View>
+        <View style={styles.locationContainer}>
+          {/* <Text style={styles.locationLabel}>Location: </Text>
+          <Text style={styles.locationText}>Kilpauk</Text> */}
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 export default Restaurants;
+
+const styles = StyleSheet.create({
+  container: {
+    // height: 330,
+    backgroundColor: 'white',
+    margin: 10,
+    borderRadius: 10,
+    elevation: 10,
+  },
+  image: {
+    width: '100%',
+    height: 200,
+    resizeMode: 'cover',
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  heartIcon: {
+    marginLeft: responsiveWidth(84),
+    marginTop: responsiveHeight(1),
+    position: 'absolute',
+  },
+  timerContainer: {
+    height: 20,
+    width: 100,
+    backgroundColor: 'white',
+    borderTopRightRadius: 10,
+    marginTop: -20,
+  },
+  timerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+  },
+  timerText: {
+    color: 'green',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginTop: responsiveHeight(1),
+  },
+  headerText: {
+    color: 'black',
+    fontSize: 25,
+    width: responsiveWidth(65),
+    // fontWeight: 'bold',
+    fontFamily: Fonts.Bold,
+  },
+  ratingContainer: {
+    width: 43,
+    height: 25,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    backgroundColor: 'green',
+    borderRadius: 5,
+  },
+  ratingText: {
+    color: 'white',
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  cuisineContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: responsiveHeight(-1),
+    // justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    marginLeft: 10,
+  },
+  cuisineText: {
+    color: 'gray',
+    fontSize: 15,
+    margin: 5,
+  },
+  cuisineIcon: {
+    margin: 5,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    marginTop: responsiveHeight(0.5),
+    marginBottom: responsiveHeight(2),
+    marginLeft: responsiveWidth(5),
+  },
+  locationLabel: {
+    color: 'gray',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  locationText: {
+    color: 'black',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+});

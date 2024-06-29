@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
+  TextInput,
   Modal,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -22,10 +23,13 @@ import {useCart} from '../Provider/Provider';
 import Fonts from '../Utilities/Fonts';
 import Colors from '../Utilities/Colors';
 import AntDesign from 'react-native-vector-icons/AntDesign';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Feather from 'react-native-vector-icons/Feather';
 
 const DetailView = ({route, navigation}) => {
   const {item} = route.params;
-  const {addToCart, Cartcount} = useCart();
+  const {addToCart, Cartcount, setCart, CurrentUser, cart, increaseQuantity} =
+    useCart();
   const [Dataview, setDataview] = useState([]);
   const [expanded, setExpanded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -37,8 +41,15 @@ const DetailView = ({route, navigation}) => {
   const [quantities, setQuantities] = useState({});
   const [cartHasItems, setCartHasItems] = useState(false); // State to store quantities for each item
   const reskey = item.key;
+  const resname = item.Restaurantname;
+
+  const [Quantitycount, setQuantitycount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredData1, setFilteredData1] = useState([]);
+  const [showSearchBar, setShowSearchBar] = useState(false);
 
   useEffect(() => {
+    console.log(item);
     if (item && item.Dishes) {
       const formattedData = Object.keys(item.Dishes).map(dish => ({
         key: dish,
@@ -108,7 +119,14 @@ const DetailView = ({route, navigation}) => {
   };
 
   const handleAddToCart = dish => {
-    addToCart({...dish, restaurantId: reskey, Quantity: 1}, reskey);
+    console.log('dish', dish);
+    const updatedCart = {dish};
+    if (updatedCart[item.key]) {
+      updatedCart[item.key].Quantity += 1;
+    } else {
+      updatedCart[item.key] = {...dish, Quantity: 1};
+    }
+    addToCart(dish);
     setQuantities(prev => ({...prev, [dish.key]: 1}));
     setCartHasItems(true); // Set cartHasItems to true
   };
@@ -134,6 +152,84 @@ const DetailView = ({route, navigation}) => {
     setCartHasItems(hasItems);
   };
 
+  const checkQuantitycount = id => {
+    // cart.map(item=>{
+    //   if(item.key===cart.key){
+
+    //   }
+    // })
+    // setQuantitycount(currentCart)
+    console.log('cart', cart);
+
+    if (cart) {
+      let currentCart;
+
+      if (cart.items) currentCart = cart?.items.find(c => c.key === id);
+      else currentCart = cart.find(c => c.key === id);
+      if (currentCart) return currentCart.Quantity;
+      else return 0;
+    } else return 0;
+  };
+  const increaseCount = async itemId => {
+    // const updatedCart = item;
+    // updatedCart[item.key].Quantity += 1;
+    // setCart(updatedCart);
+    // await AsyncStorage.setItem(
+    //   `cart-${CurrentUser}`,
+    //   JSON.stringify(updatedCart),
+    // );
+
+    const newCart = cart?.items.map(item => {
+      console.log('itemlist', item);
+      if (item.key === itemId) {
+        return {...item, Quantity: item.Quantity + 1};
+      }
+      console.log('cartitem', item);
+      return item;
+    });
+    setCart(newCart);
+
+    await AsyncStorage.setItem(`cart-${CurrentUser}`, JSON.stringify(newCart));
+  };
+  const decreaseCount = async item => {
+    const updatedCart = {...item};
+    if (updatedCart[item.key].count > 1) {
+      updatedCart[item.id].count -= 1;
+    } else {
+      delete updatedCart[item.id];
+    }
+    setCart(updatedCart);
+    await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
+  };
+
+  useEffect(() => {
+    if (item && item.Dishes) {
+      const formattedData = Object.keys(item.Dishes).map(dish => ({
+        key: dish,
+        ...item.Dishes[dish],
+      }));
+      setDataview(formattedData);
+      setFilteredData1(formattedData);
+    }
+  }, [item]);
+
+  const toggleSearch = () => {
+    setShowSearchBar(!showSearchBar); // Open search modal
+  };
+
+  const handleSearch = text => {
+    setSearchQuery(text);
+    if (text.trim() === '') {
+      setFilteredData1(Dataview); // If search query is empty, show all dishes
+    } else {
+      const lowercasedQuery = text.toLowerCase();
+      const filtered = Dataview.filter(item =>
+        item.DishName.toLowerCase().includes(lowercasedQuery),
+      );
+      setFilteredData1(filtered);
+    }
+  };
+
   return (
     <View style={{flex: 1, backgroundColor: '#f5f5f5'}}>
       <ScrollView>
@@ -141,6 +237,62 @@ const DetailView = ({route, navigation}) => {
           source={{uri: item.DownloadUrl}}
           style={{width: '100%', height: 200}}
         />
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            position: 'absolute',
+            marginTop: 34,
+          }}>
+          <TouchableOpacity
+            style={{marginLeft: 15}}
+            onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={25} color={'white'} />
+          </TouchableOpacity>
+          {showSearchBar ? (
+            <View
+              style={{
+                width: 200,
+                marginHorizontal: responsiveWidth(3),
+                borderRadius: 5,
+                backgroundColor: '#fff',
+                elevation: 10,
+                flexDirection: 'row',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+              }}>
+              <Feather
+                style={{marginLeft: 10}}
+                name={'search'}
+                size={18}
+                color={Colors.orange}
+              />
+              <TextInput
+                style={{
+                  fontSize: 16,
+                  height: 45,
+                  color: 'black',
+                  flex: 1,
+                }}
+                placeholderTextColor={'gray'}
+                placeholder="Search"
+                value={searchQuery}
+                onChangeText={handleSearch}
+              />
+            </View>
+          ) : (
+            <TouchableOpacity onPress={toggleSearch} style={{marginLeft: 195}}>
+              <Ionicons name="search" size={25} color={'white'} />
+            </TouchableOpacity>
+          )}
+          {/* <TouchableOpacity style={{marginLeft: 45}} onPress={toggleHeart}>
+            <Entypo
+              name={isHeartFilled ? 'heart' : 'heart-outlined'}
+              size={28}
+              color={'red'}
+            />
+          </TouchableOpacity> */}
+        </View>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Ionicons
             name="arrow-back"
@@ -218,7 +370,7 @@ const DetailView = ({route, navigation}) => {
           </View>
         </View>
         <FlatList
-          data={Dataview}
+          data={searchQuery ? filteredData1 : Dataview}
           scrollEnabled={false}
           keyExtractor={(item, index) => item.key}
           renderItem={({item, index}) => (
@@ -255,22 +407,31 @@ const DetailView = ({route, navigation}) => {
                   />
                   {quantities[item.key] ? (
                     <View style={styles.quantityContainer}>
-                      <TouchableOpacity
-                        onPress={() => handleDecreaseQuantity(item.key)}>
+                      <TouchableOpacity onPress={() => decreaseCount(item.key)}>
                         <Text style={styles.quantityButton}>-</Text>
                       </TouchableOpacity>
                       <Text style={styles.quantityText}>
-                        {quantities[item.key]}
+                        {/* {cart?.[item.key]} */}
+                        {checkQuantitycount(item.key)}
                       </Text>
                       <TouchableOpacity
-                        onPress={() => handleIncreaseQuantity(item.key)}>
+                        onPress={() => increaseQuantity(item.key)}>
                         <Text style={styles.quantityButton}>+</Text>
                       </TouchableOpacity>
                     </View>
                   ) : (
                     <TouchableOpacity
                       style={styles.addButton}
-                      onPress={() => handleAddToCart(item)}>
+                      onPress={
+                        () =>
+                          handleAddToCart({
+                            ...item,
+                            restaurantId: reskey,
+                            restaurantname: resname,
+                            Quantity: 1,
+                          })
+                        // addToCart({...item, restaurantId: reskey, Quantity: 1})
+                      }>
                       <Text style={styles.addButtonText}>ADD+</Text>
                     </TouchableOpacity>
                   )}

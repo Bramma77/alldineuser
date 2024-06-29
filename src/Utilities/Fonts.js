@@ -1,10 +1,13 @@
-
-export default Fonts={
-
-    Bold:"ZillaSlab-Bold",
-    Light:"ZillaSlab-Light",
-    Medium:"ZillaSlab-Medium",
-    Regular:"ZillaSlab-Regular",
-    SemiBold:"ZillaSlab-SemiBold",
-    SemiBoldItalic:"ZillaSlab-SemiBoldItalic"
-}
+export default Fonts = {
+  BoldP: 'ZillaSlab-Bold',
+  LightP: 'ZillaSlab-Light',
+  MediumP: 'ZillaSlab-Medium',
+  RegularP: 'ZillaSlab-Regular',
+  SemiBoldP: 'ZillaSlab-SemiBold',
+  SemiBoldItalic: 'ZillaSlab-SemiBoldItalic',
+  Bold: 'Poppins-Bold',
+  Ligh: 'Poppins-Light',
+  Medium: 'Poppins-Medium',
+  Regular: 'Poppins-Regular',
+  SemiBold: 'Poppins-SemiBold',
+};

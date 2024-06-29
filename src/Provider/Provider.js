@@ -1,6 +1,10 @@
 import React, {createContext, useState, useContext, useEffect} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
+import {database} from '../Component/addtoWishlist';
+import {firebase} from '@react-native-firebase/database';
+import {RestaurantsData} from '../Component/Restaruntdata';
+import {Orders} from '../Component/Orders';
 
 const CartContext = createContext();
 
@@ -10,7 +14,10 @@ export const CartProvider = ({children}) => {
   const [CartItems, setCartItems] = useState([]);
   const [ResId, setResId] = useState(false);
   const [confirm, setConfirm] = useState(null);
-  const [CurrentUser, setCurrentUser] = useState(null);
+  const [CurrentUser, setCurrentUser] = useState('');
+  const [Wishlistdata, setWishlistdata] = useState([]);
+  const [Restaurantdata, setRestaurantsdata] = useState([]);
+  const [orderlist, setOrderlist] = useState([]);
 
   const cartKey = `cart-${CurrentUser}`;
 
@@ -21,8 +28,76 @@ export const CartProvider = ({children}) => {
       console.error('Error saving cart', error);
     }
   };
+  const currentuser = auth().currentUser?.uid;
+  const getResponseWishlist = async () => {
+    try {
+      const all = await database.getWishlist(currentuser);
+      //   console.log('Fetched wishlist:', all);
+      setWishlistdata(all);
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+    }
+  };
 
-  const addToCart = async (item, restaurantId) => {
+  const RestaurantsInfo = async () => {
+    try {
+      const all = await RestaurantsData.HotelList(currentuser);
+      // console.log('Fetched wishlist:', all);
+      setRestaurantsdata(all);
+    } catch (error) {
+      console.error('Error fetching wishlist:', error);
+    }
+  };
+
+  const getorderlist = async () => {
+    try {
+      if (currentuser) {
+        const data = await Orders.Orderlist(currentuser);
+        console.log('orders', data);
+        setOrderlist(data);
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+    }
+  };
+
+  useEffect(() => {
+    getorderlist();
+  }, [Orders]);
+
+  useEffect(() => {
+    RestaurantsInfo();
+    const wishlistRef = firebase
+      .database()
+      .ref('wishlist')
+      .child(`${currentuser}`);
+    wishlistRef.on(
+      'value',
+      snapshot => {
+        const data = snapshot.val();
+        console.log(typeof data, 'wish');
+        if (data !== null) {
+          const finaldata = Object.keys(data);
+          console.log('wishlist data:', finaldata);
+          // resolve(finaldata);
+          setWishlistdata(finaldata);
+        } else {
+          // resolve([]);
+          console.log('er');
+        }
+      },
+      error => {
+        reject(error);
+      },
+    );
+
+    // Cleanup listener
+    return () => {
+      wishlistRef.off();
+    };
+  }, []);
+
+  const addToCart = async item => {
     try {
       let currentCart = await AsyncStorage.getItem(cartKey);
       currentCart = currentCart ? JSON.parse(currentCart) : null;
@@ -36,17 +111,15 @@ export const CartProvider = ({children}) => {
           const existingItemKeys = currentCart.items.map(c => c.key);
 
           if (!existingItemKeys.includes(item.key)) {
-            currentCart.items.push(item);
+            currentCart?.items.push(item);
           }
         } else {
           currentCart = {
-            restaurantId: restaurantId,
             items: [item],
           };
         }
       } else {
         currentCart = {
-          restaurantId: restaurantId,
           items: [item],
         };
       }
@@ -75,13 +148,18 @@ export const CartProvider = ({children}) => {
   };
 
   const increaseQuantity = async itemId => {
-    const newCart = cart.map(item => {
-      if (item.key === itemId) {
-        return {...item, Quantity: item.Quantity + 1};
-      }
-      console.log(item);
-      return item;
-    });
+    console.log('itemid', itemId);
+    console.log('increasequ', cart);
+    const newCart = {
+      items: cart?.items.map(item => {
+        console.log('itemlist', item);
+        if (item.key === itemId) {
+          return {...item, Quantity: item.Quantity + 1};
+        }
+        console.log('cartitem', item);
+        return item;
+      }),
+    };
     setCart(newCart);
 
     await AsyncStorage.setItem(`cart-${CurrentUser}`, JSON.stringify(newCart));
@@ -89,15 +167,15 @@ export const CartProvider = ({children}) => {
   };
 
   const decreaseQuantity = async itemId => {
-    const newCart = cart.map(item => {
-      if (item.key === itemId && item.Quantity > 1) {
-        //  const Dishnewp=`${item.DishPrice / item.Quantity}`
-
-        return {...item, Quantity: item.Quantity - 1};
-      }
-      console.log(item);
-      return item;
-    });
+    const newCart = {
+      items: cart.items.map(item => {
+        if (item.key === itemId && item.Quantity > 1) {
+          return {...item, Quantity: item.Quantity - 1};
+        }
+        console.log(item);
+        return item;
+      }),
+    };
     console.log(newCart);
     setCart(newCart);
     await AsyncStorage.setItem(`cart-${CurrentUser}`, JSON.stringify(newCart));
@@ -117,13 +195,13 @@ export const CartProvider = ({children}) => {
     getData();
     getCartItemCount();
     console.log(CartItems);
-    const currentUser = auth().currentUser;
-    setCurrentUser(currentUser);
+    const currentUser1 = auth().currentUser?.uid;
+    setCurrentUser(currentUser1);
   }, []);
 
   const getData = async () => {
     try {
-      const jsonValue = await AsyncStorage.getItem('CartItem');
+      const jsonValue = await AsyncStorage.getItem(`cart-${CurrentUser}`);
       return jsonValue != null ? JSON.parse(jsonValue) : null;
     } catch (e) {
       // error reading value
@@ -134,17 +212,20 @@ export const CartProvider = ({children}) => {
     const storedCart = await AsyncStorage.getItem(`cart-${CurrentUser}`);
     const cartItems = storedCart ? JSON.parse(storedCart) : [];
     setCartItems(cartItems);
-    setCart(cartItems?.items);
-    // setResId(cartItems[0].restaurantId)
+    setCart(cartItems);
+    if (cartItems?.items) {
+      setResId(cartItems?.items[0]?.restaurantId);
+    }
     console.log('restaruantid', cartItems);
     setCartcount(cartItems?.items?.length);
-    return cartItems.length;
+    return cartItems;
   };
 
   return (
     <CartContext.Provider
       value={{
         cart,
+        setCart,
         addToCart,
         removeFromCart,
         clearCart,
@@ -158,6 +239,11 @@ export const CartProvider = ({children}) => {
         confirm,
         setConfirm,
         CurrentUser,
+        Wishlistdata,
+        getResponseWishlist,
+        Restaurantdata,
+        orderlist,
+        getorderlist,
       }}>
       {children}
     </CartContext.Provider>

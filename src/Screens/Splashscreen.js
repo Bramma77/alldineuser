@@ -32,10 +32,13 @@ const Splash = ({navigation}) => {
         }),
       );
     } else {
-      CommonActions.reset({
-        index: 1,
-        routes: [{name: 'Mypager'}],
-      });
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 1,
+          routes: [{name: 'Mypager'}],
+        }),
+      );
+      // navigation.navigate('Mypager');
     }
     //navigation.navigate('Mypager');
     // }
@@ -45,7 +48,7 @@ const Splash = ({navigation}) => {
     const timer = setTimeout(() => {
       onAuthStateChanged();
       // navigation.replace('Mypager');
-    }, 3000); // 3000 milliseconds = 3 seconds
+    }, 5000); // 3000 milliseconds = 3 seconds
 
     return () => clearTimeout(timer); // Cleanup the timer if the component unmounts
   }, [navigation]);
