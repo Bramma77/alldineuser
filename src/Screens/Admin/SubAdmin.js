@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const SubAdmin = ({navigation, route}) => {
   const [Restaurantname, setRestaurantname] = useState('');
   const [Address, setAddress] = useState('');
+  const [Location, setLocation] = useState('');
   const [ContactNo, setcontactNo] = useState('');
   const [ShortDes, setShortDes] = useState('');
   const [LongDes, setLongDes] = useState('');
@@ -65,6 +66,7 @@ const SubAdmin = ({navigation, route}) => {
         setResData(data);
         setRestaurantname(data.Restaurantname);
         setAddress(data.RestaurantAddress);
+        setLocation(data.RestaurantLocation);
         setcontactNo(data.ContactNo);
         setShortDes(data.ShortDes);
         setLongDes(data.LongDes);
@@ -109,6 +111,7 @@ const SubAdmin = ({navigation, route}) => {
         Token: AccessToken,
         Restaurantname: Restaurantname,
         RestaurantAddress: Address,
+        RestaurantLocation: Location,
         ContactNo: ContactNo,
         ShortDes: ShortDes,
         LongDes: LongDes,
@@ -149,6 +152,7 @@ const SubAdmin = ({navigation, route}) => {
   const onChangevalue = (text, value) => {
     if (value === 'Restaurantname') setRestaurantname(text);
     if (value === 'Address') setAddress(text);
+    if (value === 'Location') setLocation(text);
     if (value === 'ContactNo') setcontactNo(text);
     if (value === 'ShortDes') setShortDes(text);
     if (value === 'LongDes') setLongDes(text);
@@ -182,7 +186,14 @@ const SubAdmin = ({navigation, route}) => {
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}>
-                    <Text>Uploaded Success</Text>
+                    <Text
+                      style={{
+                        color: 'green',
+                        fontFamily: Fonts.SemiBold,
+                        fontSize: 15,
+                      }}>
+                      Uploaded Success
+                    </Text>
                   </View>
                 </TouchableOpacity>
               </Modal>
@@ -220,11 +231,18 @@ const SubAdmin = ({navigation, route}) => {
                 value={Address}
                 style={Styles.TextInput}
               />
+              <Text style={Styles.TextSubhead}>Restaurant Location</Text>
+              <TextInput
+                onChangeText={text => onChangevalue(text, 'Location')}
+                value={Location}
+                style={Styles.TextInput}
+              />
               <Text style={Styles.TextSubhead}>Restaurant Contact No</Text>
               <TextInput
                 style={Styles.TextInput}
                 onChangeText={text => onChangevalue(text, 'ContactNo')}
                 value={ContactNo}
+                keyboardType="numeric"
               />
               <Text style={Styles.TextSubhead}>
                 Restaurant Short Description
@@ -276,6 +294,15 @@ const SubAdmin = ({navigation, route}) => {
                     color: 'gray',
                   }}>
                   {ResData?.RestaurantAddress}
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontFamily: Fonts.Medium,
+                    marginTop: 10,
+                    color: 'gray',
+                  }}>
+                  {ResData?.RestaurantLocation}
                 </Text>
                 <Text
                   style={{
@@ -429,11 +456,18 @@ const SubAdmin = ({navigation, route}) => {
               value={Address}
               style={Styles.TextInput}
             />
+            <Text style={Styles.TextSubhead}>Restaurant Location</Text>
+            <TextInput
+              onChangeText={text => onChangevalue(text, 'Location')}
+              value={Location}
+              style={Styles.TextInput}
+            />
             <Text style={Styles.TextSubhead}>Restaurant Contact No</Text>
             <TextInput
               style={Styles.TextInput}
               onChangeText={text => onChangevalue(text, 'ContactNo')}
               value={ContactNo}
+              keyboardType="numeric"
             />
             <Text style={Styles.TextSubhead}>Restaurant Short Description</Text>
             <TextInput
@@ -481,6 +515,7 @@ const Styles = StyleSheet.create({
     paddingLeft: 10,
     marginTop: 10,
     alignSelf: 'center',
+    color: 'black',
     fontFamily: Fonts.Light,
   },
   TextSubhead: {

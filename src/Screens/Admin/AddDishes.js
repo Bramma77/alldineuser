@@ -5,10 +5,11 @@ import {
   TextInput,
   StyleSheet,
   Image,
+  Touchable,
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import {launchImageLibrary} from 'react-native-image-picker';
+import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
 import database from '@react-native-firebase/database';
 import Colors from '../../Utilities/Colors';
@@ -16,6 +17,7 @@ import Fonts from '../../Utilities/Fonts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AddDishes = ({route, navigation}) => {
+  // const {AccessToken} = route.params;
   const {dishId} = route.params || {};
   const [Dishesname, setDishesname] = useState('');
   const [DishesPrice, setDishesPrice] = useState('');
@@ -24,6 +26,12 @@ const AddDishes = ({route, navigation}) => {
   const [ImageUri, setImageUri] = useState(null);
   const [AccessToken, setAccessToken] = useState(false);
   const [isVeg, setIsVeg] = useState(false);
+
+  const onChangevalue = (text, value) => {
+    if (value === 'Dishname') setDishesname(text);
+    if (value === 'DishPrice') setDishesPrice(text);
+    if (value === 'PreparationTime') setPreparationTime(text);
+  };
 
   useEffect(() => {
     getUser();
@@ -49,71 +57,112 @@ const AddDishes = ({route, navigation}) => {
     }
   };
 
-  const onChangevalue = (text, value) => {
-    if (value === 'Dishname') setDishesname(text);
-    if (value === 'DishPrice') setDishesPrice(text);
-    if (value === 'PreparationTime') setPreparationTime(text);
-  };
-
   const selectDishType = type => {
     setDishesType(type);
     setIsVeg(type === 'Veg');
   };
 
-  const chooseImage = async () => {
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      quality: 1,
-    });
-    if (result.assets && result.assets.length > 0) {
-      const imageUri = result.assets[0].uri;
-      setImageUri(imageUri);
-    }
-  };
-
-  const uploadImage = async () => {
-    if (!ImageUri) return null;
-
-    const filename = ImageUri.substring(ImageUri.lastIndexOf('/') + 1);
-    const reference = storage().ref(`dishes/${filename}`);
-    await reference.putFile(ImageUri);
-    return await reference.getDownloadURL();
-  };
-
   const getUser = async () => {
     try {
       const userData = JSON.parse(await AsyncStorage.getItem('AdminUser'));
+      console.log('userdsa', userData);
       setAccessToken(userData.AccessToken);
     } catch (error) {
       console.log(error);
     }
   };
 
-  const onSubmit = async () => {
-    const imageUrl = ImageUri != null ? imageUrl : await uploadImage();
-    const dishData = {
-      DishName: Dishesname,
-      DishPrice: DishesPrice,
-      DishType: DishesType,
-      DishPreparationType: PreparationTime,
-      DishesImage: imageUrl || ImageUri,
-      isVeg: DishesType === 'Veg',
+  const uploadImage = async uri => {
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const filename = uri.substring(uri.lastIndexOf('/') + 1);
+      const ref = storage().ref(`Foodimages / ${filename}`);
+      await ref.put(blob);
+
+      // Get the download URL
+      const url = await ref.getDownloadURL();
+      //setDownloadUrl(url);
+
+      return url;
+
+      console.log('Download URL: ', url);
+    } catch (error) {
+      console.log('Upload error: ', error);
+    }
+  };
+
+  const uploadimg = () => {
+    // setLoader(true)
+    uploadImage(ImageUri)
+      .then(downloadUrls => {
+        console.log('Images uploaded successfully. URLs:', downloadUrls);
+
+        handlePostData(downloadUrls);
+      })
+      .catch(error => {
+        console.error('Error uploading images:', error);
+      });
+  };
+
+  const handlePostData = async downloadUrls => {
+    try {
+      const data = {
+        DishName: Dishesname,
+        DishPrice: DishesPrice,
+        DishType: DishesType,
+        DishPreparationType: PreparationTime,
+        DishesImage: downloadUrls || ImageUri,
+        isVeg: isVeg, // Add isVeg property
+      };
+      const ref = database()
+        .ref('RestaurantsData')
+        .child(AccessToken)
+        .child('Dishes');
+
+      if (dishId) {
+        await ref.child(dishId).update(data);
+        console.log('Update successfully');
+      } else {
+        await ref.push(data);
+        console.log('Added successfully');
+      }
+      navigation.goBack();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const selectImage = async () => {
+    const options = {
+      title: 'Select Image',
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+      includeExtra: true,
+      mediaType: 'photo', // Specify only photos
+      quality: 0.8, // Image quality
+      multiple: true,
     };
 
-    if (dishId) {
-      // Update existing dish
-      await database()
-        .ref(`RestaurantsData/${AccessToken}/Dishes/${dishId}`)
-        .update(dishData)
-        .then(() => console.log('Dish updated successfully.'));
-    } else {
-      // Add new dish
-      await database()
-        .ref(`RestaurantsData/${AccessToken}/Dishes`)
-        .push(dishData)
-        .then(() => console.log('Dish added successfully.'));
-    }
-    navigation.goBack();
+    await launchImageLibrary(options, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        const selectedImages = response.assets.map(asset => ({
+          uri: asset.uri,
+        }));
+        console.log(response);
+        // console.log(selectedImages)
+        setImageUri(response.assets[0].uri);
+        //  setImageUris((prevImageUris) => [...prevImageUris, ...selectedImages]);
+
+        console.log(ImageUri);
+      }
+    });
   };
 
   return (
@@ -135,7 +184,7 @@ const AddDishes = ({route, navigation}) => {
             />
           )}
         </View>
-        <TouchableOpacity style={styles.Button} onPress={chooseImage}>
+        <TouchableOpacity style={styles.Button} onPress={selectImage}>
           <Text style={{fontSize: 16, fontFamily: Fonts.Light, color: 'white'}}>
             Choose Image
           </Text>
@@ -151,6 +200,7 @@ const AddDishes = ({route, navigation}) => {
           style={styles.TextInput}
           onChangeText={text => onChangevalue(text, 'DishPrice')}
           value={DishesPrice}
+          keyboardType="numeric"
         />
         <Text style={styles.Text}>Choose Dish Type</Text>
         <View style={styles.dishTypeContainer}>
@@ -176,9 +226,11 @@ const AddDishes = ({route, navigation}) => {
           style={styles.TextInput}
           onChangeText={text => onChangevalue(text, 'PreparationTime')}
           value={PreparationTime}
+          keyboardType="numeric"
         />
+
         <TouchableOpacity
-          onPress={onSubmit}
+          onPress={uploadimg}
           style={{
             height: 50,
             width: 100,
@@ -198,7 +250,7 @@ const AddDishes = ({route, navigation}) => {
     </View>
   );
 };
-
+export default AddDishes;
 const styles = StyleSheet.create({
   TextInput: {
     height: 50,
@@ -248,5 +300,3 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-export default AddDishes;

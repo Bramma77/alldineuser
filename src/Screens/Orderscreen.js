@@ -22,9 +22,10 @@ import Restaurants from '../Component/Restaurants';
 const Orderscreen = ({navigation}) => {
   const {
     cart,
+    setCart,
     ResId,
     increaseQuantity,
-    decreaseQuantity,
+    // decreaseQuantity,
     clearCart,
     CurrentUser,
     getorderlist,
@@ -92,6 +93,28 @@ const Orderscreen = ({navigation}) => {
       console.log(error);
       Alert.alert('Error', 'Something went wrong while placing your order');
     }
+  };
+
+  const decreaseQuantity = async itemId => {
+    const newCart = {
+      items: cart.items.map(item => {
+        if (item.key === itemId) {
+          if (item.Quantity > 1) {
+            return {...item, Quantity: item.Quantity - 1};
+          } else {
+            Alert.alert(
+              'Minimum Quantity',
+              'The minimum quantity is 1. You cannot reduce it further.',
+            );
+            return item; // Return the item without changing the quantity
+          }
+        }
+        return item;
+      }),
+    };
+    setCart(newCart);
+    await AsyncStorage.setItem(`cart-${CurrentUser}`, JSON.stringify(newCart));
+    getCartItemCount();
   };
 
   const renderItem = ({item}) => (

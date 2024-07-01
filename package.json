@@ -27,6 +27,7 @@
     "react-hook-form": "^7.51.5",
     "react-native": "0.74.1",
     "react-native-animated-dots-carousel": "^1.0.2",
+    "react-native-document-picker": "^9.3.0",
     "react-native-dots-pagination": "^0.3.1",
     "react-native-fast-image": "^8.6.3",
     "react-native-gesture-handler": "^2.16.2",

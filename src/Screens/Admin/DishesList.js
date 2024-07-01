@@ -139,6 +139,8 @@ const DishesList = ({navigation, route}) => {
                     fontSize: 15,
                     fontFamily: Fonts.Bold,
                     color: 'black',
+                    width: 170,
+                    // borderWidth: 1,
                   }}>
                   {item.DishName}
                 </Text>
@@ -195,6 +197,7 @@ const DishesList = ({navigation, route}) => {
           </View>
         )}
       />
+      <View style={{marginBottom: 20}} />
       <Modal
         animationType="slide"
         transparent={true}

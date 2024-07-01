@@ -26,7 +26,7 @@ const AdminDashboard = ({navigation}) => {
 
   const handleStockAvailability = () => {
     // Status functionality
-    navigation.navigate('Availability');
+    navigation.navigate('RestaurantList');
   };
 
   const handleToken = () => {

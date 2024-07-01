@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
   Modal,
+  Alert, // Import Alert from react-native
 } from 'react-native';
 import {
   responsiveHeight,
@@ -20,7 +21,15 @@ import moment from 'moment';
 import auth from '@react-native-firebase/auth';
 import database from '@react-native-firebase/database'; // Import Firebase Realtime Database
 
-const AnimatedTextInput = ({label, value, editable, onChangeText, onPress}) => {
+const AnimatedTextInput = ({
+  label,
+  value,
+  editable,
+  onChangeText,
+  keyboardType,
+  onPress,
+  maxLength,
+}) => {
   if (editable === undefined) {
     editable = false;
   }
@@ -92,13 +101,15 @@ const AnimatedTextInput = ({label, value, editable, onChangeText, onPress}) => {
           onChangeText={onChangeText}
           value={value}
           editable={editable && !onPress}
+          keyboardType={keyboardType}
+          maxLength={maxLength}
         />
       </View>
     </TouchableOpacity>
   );
 };
 
-const EditProfile = () => {
+const EditProfile = ({navigation}) => {
   const [editable, setEditable] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',
@@ -134,18 +145,95 @@ const EditProfile = () => {
     setEditable(true);
   };
 
+  // const handleUpdate = async () => {
+  //   try {
+  //     await database().ref(`usersList/${currentuser}`).set(profileData);
+  //     setInitialProfileData(profileData);
+  //     setEditable(false);
+  //     navigation.goBack();
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  //   if (validateEmail(profileData.email)) {
+  //     // Logic to save profile data (e.g., update Firebase)
+  //     Alert.alert('Success', 'Profile updated successfully!');
+  //   } else {
+  //     Alert.alert('Invalid Email', 'Please enter a valid email address.');
+  //   }
+  // };
+
   const handleUpdate = async () => {
+    // Check if there are any changes
+    if (JSON.stringify(profileData) === JSON.stringify(initialProfileData)) {
+      Alert.alert('No Changes', 'No changes were made to update.');
+      return;
+    }
+
+    // Validate email first
+    if (!validateEmail(profileData.email)) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+
+    if (!validateMobile(profileData.mobile)) {
+      Alert.alert(
+        'Invalid Number',
+        'Mobile number should be exactly 10 digits long.',
+      );
+      return;
+    }
+
     try {
+      // Update profile data in Firebase
       await database().ref(`usersList/${currentuser}`).set(profileData);
+
+      // Update initial profile data and set editable to false
       setInitialProfileData(profileData);
       setEditable(false);
+
+      // Navigate back after successful update
+      navigation.goBack();
+
+      // Show success message after updating profile
+      Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
       console.log(error);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
     }
   };
 
+  // const handleChange = (key, value) => {
+  //   // Limit mobile number to 10 digits
+  //   if (key === 'mobile' && value.length > 10) {
+  //     value = value.slice(0, 10);
+  //   }
+  //   setProfileData({...profileData, [key]: value});
+  // };
   const handleChange = (key, value) => {
+    if (key === 'mobile') {
+      // Limit to 10 digits
+      if (value.length > 10) {
+        value = value.slice(0, 10);
+      }
+    }
     setProfileData({...profileData, [key]: value});
+  };
+
+  const handleEmailChange = text => {
+    setProfileData({...profileData, email: text});
+  };
+
+  // Function to validate email format
+  const validateEmail = email => {
+    // Regular expression for email validation
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  };
+
+  const validateMobile = mobile => {
+    // Regular expression for 10-digit mobile number validation
+    const regex = /^\d{10}$/;
+    return regex.test(mobile);
   };
 
   const hasChanges =
@@ -200,12 +288,16 @@ const EditProfile = () => {
           value={profileData.mobile}
           editable={editable}
           onChangeText={text => handleChange('mobile', text)}
+          keyboardType="numeric"
+          maxLength={10} // Limit to 10 digits
         />
+
         <AnimatedTextInput
           label="Email"
           value={profileData.email}
           editable={editable}
-          onChangeText={text => handleChange('email', text)}
+          onChangeText={text => handleEmailChange(text)}
+          keyboardType="email-address"
         />
         <AnimatedTextInput
           label="D.O.B"
@@ -276,7 +368,7 @@ export default EditProfile;
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 50,
+    marginVertical: 15,
     marginHorizontal: 10,
     backgroundColor: 'white',
     padding: 10,
@@ -328,7 +420,6 @@ const styles = StyleSheet.create({
   updateButton: {
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 10,
     marginHorizontal: 10,
     backgroundColor: '#dcdcdc',
     padding: 10,
@@ -366,6 +457,7 @@ const styles = StyleSheet.create({
   modalOptionText: {
     fontSize: 18,
     color: 'black',
+    fontFamily: Fonts.Regular,
   },
   modalClose: {
     marginTop: 20,
@@ -373,5 +465,6 @@ const styles = StyleSheet.create({
   modalCloseText: {
     fontSize: 16,
     color: 'blue',
+    fontFamily: Fonts.SemiBold,
   },
 });

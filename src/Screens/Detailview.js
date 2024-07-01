@@ -9,11 +9,13 @@ import {
   StyleSheet,
   TextInput,
   Modal,
+  Alert,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import FontAwesome6 from 'react-native-vector-icons/FontAwesome6';
 import Octicons from 'react-native-vector-icons/Octicons';
+import Entypo from 'react-native-vector-icons/Entypo';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {
   responsiveWidth,
@@ -28,8 +30,15 @@ import Feather from 'react-native-vector-icons/Feather';
 
 const DetailView = ({route, navigation}) => {
   const {item} = route.params;
-  const {addToCart, Cartcount, setCart, CurrentUser, cart, increaseQuantity} =
-    useCart();
+  const {
+    addToCart,
+    Cartcount,
+    setCart,
+    CurrentUser,
+    cart,
+    increaseQuantity,
+    // decreaseQuantity,
+  } = useCart();
   const [Dataview, setDataview] = useState([]);
   const [expanded, setExpanded] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -46,6 +55,7 @@ const DetailView = ({route, navigation}) => {
   const [Quantitycount, setQuantitycount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredData1, setFilteredData1] = useState([]);
+  const [filteredData2, setFilteredData2] = useState([]);
   const [showSearchBar, setShowSearchBar] = useState(false);
 
   useEffect(() => {
@@ -56,6 +66,7 @@ const DetailView = ({route, navigation}) => {
         ...item.Dishes[dish],
       }));
       setDataview(formattedData);
+      setFilteredData2(formattedData);
     }
   }, [item]);
 
@@ -63,56 +74,61 @@ const DetailView = ({route, navigation}) => {
     checkCartItems();
   }, [quantities]);
 
-  // const applyFilter = (filter) => {
-  //   setSelectedFilter(filter);
-  //   let sortedData = [...Dataview];
-  //   if (filter === 'Price - Low to High') {
-  //     sortedData.sort((a, b) => a.DishPrice - b.DishPrice);
-  //   } else if (filter === 'Price - High to Low') {
-  //     sortedData.sort((a, b) => b.DishPrice - a.DishPrice);
-  //   } else if (filter === 'Veg') {
-  //     sortedData = sortedData.filter(dish => dish.isVeg); // Display only Veg dishes
-  //   } else if (filter === 'Non-Veg') {
-  //     sortedData = sortedData.filter(dish => !dish.isVeg); // Display only Non-Veg dishes
-  //   }
-  //   setDataview(sortedData);
-  //   setModalVisible(false);
-  // };
+  const applyClearAll = () => {
+    navigation.navigate('Drawer');
+  };
 
   const applyFilter = () => {
     let filteredData = [...Dataview];
 
+    console.log(filteredData, 'sd: ', Dataview);
+
+    // Apply veg or nonVeg filter
     if (selectedFilter.veg) {
-      filteredData = filteredData.filter(dish => dish.isVeg);
+      filteredData = Dataview.filter(dish => dish.isVeg);
+      // setDataview(filteredData);
+      setFilteredData2(filteredData);
+      setModalVisible(false);
+    } else if (selectedFilter.nonVeg) {
+      filteredData = Dataview.filter(dish => !dish.isVeg);
+      setFilteredData2(filteredData);
+      setModalVisible(false);
     }
 
-    if (selectedFilter.nonVeg) {
-      filteredData = filteredData.filter(dish => !dish.isVeg);
-    }
-
+    // Sorting by price if selected
     if (selectedFilter.price === 'Price - Low to High') {
       filteredData.sort((a, b) => a.DishPrice - b.DishPrice);
+      setFilteredData2(filteredData);
+      setModalVisible(false);
     } else if (selectedFilter.price === 'Price - High to Low') {
       filteredData.sort((a, b) => b.DishPrice - a.DishPrice);
+      setFilteredData2(filteredData);
+      setModalVisible(false);
     }
-
-    setDataview(filteredData);
-    setModalVisible(false);
   };
 
   const toggleFilter = filterType => {
     setSelectedFilter(prevFilters => {
+      // Reset other filters when toggling between veg and nonVeg
       if (filterType === 'veg') {
-        return {...prevFilters, veg: !prevFilters.veg};
+        return {veg: !prevFilters.veg, nonVeg: false, price: prevFilters.price};
       }
       if (filterType === 'nonVeg') {
-        return {...prevFilters, nonVeg: !prevFilters.nonVeg};
+        return {
+          nonVeg: !prevFilters.nonVeg,
+          veg: false,
+          price: prevFilters.price,
+        };
       }
       if (
         filterType === 'Price - Low to High' ||
         filterType === 'Price - High to Low'
       ) {
-        return {...prevFilters, price: filterType};
+        return {
+          veg: prevFilters.veg,
+          nonVeg: prevFilters.nonVeg,
+          price: filterType,
+        };
       }
       return prevFilters; // Return the previous filters if no condition matches
     });
@@ -202,6 +218,28 @@ const DetailView = ({route, navigation}) => {
     await AsyncStorage.setItem('cart', JSON.stringify(updatedCart));
   };
 
+  const decreaseQuantity = async itemId => {
+    const newCart = {
+      items: cart.items.map(item => {
+        if (item.key === itemId) {
+          if (item.Quantity > 1) {
+            return {...item, Quantity: item.Quantity - 1};
+          } else {
+            Alert.alert(
+              'Minimum Quantity',
+              'The minimum quantity is 1. You cannot reduce it further.',
+            );
+            return item; // Return the item without changing the quantity
+          }
+        }
+        return item;
+      }),
+    };
+    setCart(newCart);
+    await AsyncStorage.setItem(`cart-${CurrentUser}`, JSON.stringify(newCart));
+    getCartItemCount();
+  };
+
   useEffect(() => {
     if (item && item.Dishes) {
       const formattedData = Object.keys(item.Dishes).map(dish => ({
@@ -242,7 +280,7 @@ const DetailView = ({route, navigation}) => {
             flexDirection: 'row',
             alignItems: 'center',
             position: 'absolute',
-            marginTop: 34,
+            marginTop: 10,
           }}>
           <TouchableOpacity
             style={{marginLeft: 15}}
@@ -252,9 +290,9 @@ const DetailView = ({route, navigation}) => {
           {showSearchBar ? (
             <View
               style={{
-                width: 200,
+                width: 270,
                 marginHorizontal: responsiveWidth(3),
-                borderRadius: 5,
+                borderRadius: 10,
                 backgroundColor: '#fff',
                 elevation: 10,
                 flexDirection: 'row',
@@ -281,7 +319,7 @@ const DetailView = ({route, navigation}) => {
               />
             </View>
           ) : (
-            <TouchableOpacity onPress={toggleSearch} style={{marginLeft: 195}}>
+            <TouchableOpacity onPress={toggleSearch} style={{marginLeft: 255}}>
               <Ionicons name="search" size={25} color={'white'} />
             </TouchableOpacity>
           )}
@@ -293,14 +331,7 @@ const DetailView = ({route, navigation}) => {
             />
           </TouchableOpacity> */}
         </View>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons
-            name="arrow-back"
-            size={22}
-            color={'white'}
-            style={{marginLeft: 20, position: 'absolute', marginTop: 10}}
-          />
-        </TouchableOpacity>
+
         <Text
           style={{
             fontFamily: Fonts.Bold,
@@ -311,31 +342,52 @@ const DetailView = ({route, navigation}) => {
           }}>
           {item.Restaurantname}
         </Text>
-        <View style={styles.wrapContainer}>
-          <Text style={styles.text}>North Indian</Text>
+        <View style={styles.cuisineContainer}>
+          {Dataview?.slice(0, 2).map((item, index) => (
+            <View
+              key={item.key}
+              style={{flexDirection: 'row', alignItems: 'center'}}>
+              <Octicons
+                name={'dot-fill'}
+                size={12}
+                color={'gray'}
+                style={styles.cuisineIcon}
+              />
+              <Text numberOfLines={1} style={styles.cuisineText}>
+                {item.DishName}
+              </Text>
+            </View>
+          ))}
+          <Text>.....</Text>
+          {/* 
+          <Text style={styles.cuisineText}>Pastas</Text>
           <Octicons
             name={'dot-fill'}
             size={12}
             color={'gray'}
-            style={styles.icon}
+            style={styles.cuisineIcon}
           />
-          <Text style={styles.text}>South Indian</Text>
-          <Octicons
-            name={'dot-fill'}
-            size={12}
-            color={'gray'}
-            style={styles.icon}
-          />
-          <Text style={styles.text}>Chinese</Text>
+          <Text style={styles.cuisineText}>Beverages</Text> */}
         </View>
-        <View style={styles.ratingContainer}>
-          <Text style={styles.ratingText}>4.2</Text>
-          <FontAwesome name={'star'} size={12} color={'white'} />
-        </View>
-        <View style={styles.infoContainer}>
-          <MaterialIcons name={'timer'} size={16} color={'green'} />
-          <Text style={styles.infoText}>27 mins | </Text>
-          <Text style={styles.infoText}>Tambaram</Text>
+        <View style={{flexDirection: 'row', justifyContent: 'center'}}>
+          <View style={styles.ratingContainer}>
+            <Text style={styles.ratingText}>4.2</Text>
+            <FontAwesome name={'star'} size={12} color={'white'} />
+          </View>
+
+          <View style={styles.infoContainer}>
+            <Text
+              style={{
+                color: 'gray',
+                fontSize: 20,
+                marginLeft: 5,
+                fontFamily: Fonts.LightP,
+              }}>
+              |
+            </Text>
+            <Entypo name={'location-pin'} size={16} color={'green'} />
+            <Text style={styles.infoText}>{item.RestaurantLocation}</Text>
+          </View>
         </View>
         <View
           style={{
@@ -370,7 +422,7 @@ const DetailView = ({route, navigation}) => {
           </View>
         </View>
         <FlatList
-          data={searchQuery ? filteredData1 : Dataview}
+          data={searchQuery ? filteredData1 : filteredData2}
           scrollEnabled={false}
           keyExtractor={(item, index) => item.key}
           renderItem={({item, index}) => (
@@ -383,6 +435,7 @@ const DetailView = ({route, navigation}) => {
                 }}>
                 <View>
                   <Text style={styles.foodItemTitle}>{item.DishName}</Text>
+                  {/* <Text style={styles.foodItemTitle}>{item.DishType}</Text> */}
                   <View style={styles.foodItemRating}>
                     <Text style={styles.ratingText}>4.4</Text>
                     <FontAwesome name={'star'} size={12} color={'white'} />
@@ -407,7 +460,8 @@ const DetailView = ({route, navigation}) => {
                   />
                   {quantities[item.key] ? (
                     <View style={styles.quantityContainer}>
-                      <TouchableOpacity onPress={() => decreaseCount(item.key)}>
+                      <TouchableOpacity
+                        onPress={() => decreaseQuantity(item.key)}>
                         <Text style={styles.quantityButton}>-</Text>
                       </TouchableOpacity>
                       <Text style={styles.quantityText}>
@@ -659,6 +713,7 @@ const DetailView = ({route, navigation}) => {
                     borderRadius: 5,
                   }}>
                   <Text
+                    onPress={applyClearAll}
                     style={{
                       fontSize: 18,
                       margin: responsiveHeight(2),
@@ -699,7 +754,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: responsiveHeight(1),
+    // marginTop: responsiveHeight(1),
   },
   overlay: {
     position: 'absolute',
@@ -901,6 +956,22 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Bold,
     fontSize: 14,
     color: 'white',
+  },
+  cuisineContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+    marginLeft: 10,
+  },
+  cuisineText: {
+    color: 'gray',
+    fontSize: 15,
+    margin: 5,
+  },
+  cuisineIcon: {
+    margin: 5,
   },
 });
 

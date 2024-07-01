@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   StyleSheet,
   View,
@@ -9,6 +9,7 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from 'react-native';
 // import PagerView from 'react-native-pager-view';
 // import DrawerNavigator from "../navigation/DrawerNavigator";
@@ -32,6 +33,7 @@ const Login = ({navigation}) => {
   const [value, setValue] = useState();
   const [Token, setToken] = useState(false);
   //const [confirm, setConfirm] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
   const {confirm, setConfirm} = useCart();
 
   useEffect(() => {
@@ -42,6 +44,8 @@ const Login = ({navigation}) => {
         setToken(token);
       } catch (error) {
         console.error('Permission Error:', error);
+        setErrorMessage('Permission Error: ' + error.message);
+        Alert.alert('Error', 'Permission Error: ' + error.message);
       }
     };
     requestToken();
@@ -64,6 +68,8 @@ const Login = ({navigation}) => {
       navigation.navigate('OTP');
     } catch (e) {
       console.log(e);
+      setErrorMessage('Error signing in with phone number: ' + e.message);
+      Alert.alert('Error', 'Error signing in with phone number: ' + e.message);
     }
   };
 
@@ -72,6 +78,8 @@ const Login = ({navigation}) => {
       await confirm.confirm(code);
     } catch (error) {
       console.log('Invalid code.');
+      setErrorMessage('Invalid code.');
+      Alert.alert('Error', 'Invalid code.');
     }
   }
 
@@ -123,6 +131,7 @@ const Login = ({navigation}) => {
               borderWidth: 1,
               borderRadius: 10,
               padding: 10,
+              backgroundColor: 'black',
             }}
             ref={phoneInput}
             onPressFlag={() => console.log('Flag')}
@@ -154,6 +163,17 @@ const Login = ({navigation}) => {
               </Text>
             </View>
           </TouchableOpacity>
+          {errorMessage && (
+            <Text
+              style={{
+                fontSize: 13,
+                color: 'red',
+                marginTop: 20,
+                marginHorizontal: 20,
+              }}>
+              {errorMessage}
+            </Text>
+          )}
         </View>
       </SafeAreaView>
     </View>

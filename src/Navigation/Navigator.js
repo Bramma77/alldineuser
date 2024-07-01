@@ -42,6 +42,9 @@ import OrderStatus from '../Screens/Admin/OrderStatus';
 import SubAdminDashboard from '../Screens/Admin/SubAdminDashboard';
 import SubOrder from '../Screens/Admin/SubOrders';
 import AdminLoader from '../Screens/Admin/AdminLoader';
+import PrivacyPolicy from '../Screens/PrivacyPolicy';
+import RestaurantList from '../Screens/Admin/RestaurantList';
+import RestataurantDetail from '../Screens/RestataurantDetail';
 
 const Stack = createNativeStackNavigator();
 
@@ -304,14 +307,14 @@ const BottomTab = ({navigation}) => {
 
 const Navigator = () => {
   return (
-    <CartProvider>
-      <NavigationContainer>
+    <NavigationContainer>
+      <CartProvider>
         <Stack.Navigator
-          //initialRouteName="AdminDashboard"
+          // initialRouteName="AdminDashboard"
           //initialRouteName="MyAdminTabs"
-          // initialRouteName="AdminLogin"
+          initialRouteName="AdminLogin"
           //initialRouteName='Drawer'
-          initialRouteName="Splash"
+          // initialRouteName="Splash"
 
           // screenOptions={{headerShown:false}}
         >
@@ -328,6 +331,11 @@ const Navigator = () => {
           <Stack.Screen
             name="OrderStatus"
             component={OrderStatus}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="RestaurantList"
+            component={RestaurantList}
             options={{headerShown: false}}
           />
           <Stack.Screen
@@ -348,7 +356,7 @@ const Navigator = () => {
           <Stack.Screen
             name="EditProfile"
             component={EditProfile}
-            options={{headerShown: false}}
+            options={{headerShown: true, title: 'Edit Profile'}}
           />
           <Stack.Screen
             name="AdminLogin"
@@ -359,6 +367,21 @@ const Navigator = () => {
             name="Orders"
             component={Orders}
             options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="Myorder"
+            component={Myorder}
+            options={{headerShown: true, title: 'Order History'}}
+          />
+          <Stack.Screen
+            name="RestataurantDetail"
+            component={RestataurantDetail}
+            options={{headerShown: true, title: 'Order History'}}
+          />
+          <Stack.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicy}
+            options={{headerShown: true, title: 'Privacy Policy'}}
           />
           <Stack.Screen
             name="AvailabilityList"
@@ -432,8 +455,8 @@ const Navigator = () => {
             options={{headerShown: false}}
           />
         </Stack.Navigator>
-      </NavigationContainer>
-    </CartProvider>
+      </CartProvider>
+    </NavigationContainer>
   );
 };
 export default Navigator;

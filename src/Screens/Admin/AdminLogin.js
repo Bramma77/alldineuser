@@ -117,7 +117,16 @@ const AdminLogin = ({navigation}) => {
               onChangeText={(text)=>setRestaurantName(text)}
               value={Restaurantname}
             /> */}
-        <Text style={{marginTop: 20}}>Access Token</Text>
+        <Text
+          style={{
+            marginTop: 20,
+            fontSize: 30,
+            textAlign: 'center',
+            color: Colors.orange,
+            fontFamily: Fonts.Bold,
+          }}>
+          Access Token
+        </Text>
         <TextInput
           style={{
             height: 50,
@@ -125,8 +134,10 @@ const AdminLogin = ({navigation}) => {
             padding: 10,
             borderRadius: 10,
             marginTop: 10,
+            color: 'black',
           }}
           maxLength={6}
+          keyboardType="numeric"
           onChangeText={text => setAccessToken(text)}
           value={AccessToken}
         />

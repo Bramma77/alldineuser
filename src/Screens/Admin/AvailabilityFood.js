@@ -14,8 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import database from '@react-native-firebase/database';
 import {firebase} from '@react-native-firebase/auth';
 
-const AvailabilityFood = () => {
-  const [isCheck, setisCheck] = useState(false);
+const AvailabilityFood = ({navigation}) => {
   const [Dishes, setDishes] = useState([]);
   const [AccessToken, setAccessToken] = useState(false);
 
@@ -54,6 +53,7 @@ const AvailabilityFood = () => {
         .update({Availability: status});
       console.log('Order status updated successfully.');
       Alert.alert('Success', 'Order status updated successfully.');
+      showdishes();
     } catch (error) {
       console.error('Error updating order status: ', error);
     } finally {
@@ -79,6 +79,12 @@ const AvailabilityFood = () => {
   useEffect(() => {
     showdishes();
   }, []);
+
+  const handleUpdateStatus = item => {
+    const newStatus =
+      item.Availability === 'Available' ? 'NotAvailable' : 'Available';
+    updateFoodStatus({key: item.key, status: newStatus});
+  };
 
   return (
     <View style={{flex: 1}}>
@@ -139,6 +145,8 @@ const AvailabilityFood = () => {
                       fontSize: 15,
                       fontFamily: Fonts.Bold,
                       color: 'black',
+                      width: 170,
+                      // borderWidth: 1,
                     }}>
                     {item.DishName}
                   </Text>
@@ -162,15 +170,7 @@ const AvailabilityFood = () => {
                   </Text>
                 </View>
               </View>
-              <TouchableOpacity
-                onPress={
-                  () =>
-                    updateFoodStatus({
-                      key: item.key,
-                      status: isCheck ? 'Available' : 'NotAvailable',
-                    })
-                  //setisCheck(isCheck === item.id ? !item.id : item.id)
-                }>
+              <TouchableOpacity onPress={() => handleUpdateStatus(item)}>
                 <View
                   style={{
                     height: 25,
@@ -187,9 +187,7 @@ const AvailabilityFood = () => {
                     name="check"
                     size={22}
                     color={
-                      item?.Availability === ('NotAvailable' || null)
-                        ? 'transparent'
-                        : 'green'
+                      item.Availability === 'Available' ? 'green' : 'black'
                     }
                   />
                 </View>
@@ -198,6 +196,7 @@ const AvailabilityFood = () => {
           </TouchableOpacity>
         )}
       />
+      <View style={{marginBottom: 20}} />
     </View>
   );
 };

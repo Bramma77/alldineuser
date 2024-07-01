@@ -60,8 +60,13 @@ const Restaurants = ({item, onPress}) => {
         </TouchableOpacity>
         <View style={styles.timerContainer}>
           <View style={styles.timerContent}>
-            <MaterialIcons name={'timer'} size={18} color={'green'} />
-            <Text style={styles.timerText}>27 mins</Text>
+            <Entypo name={'location-pin'} size={18} color={'green'} />
+            <Text
+              numberOfLines={1}
+              ellipsizeMode="tail"
+              style={styles.timerText}>
+              {item.RestaurantLocation}
+            </Text>
           </View>
         </View>
         <View style={styles.headerContainer}>
@@ -141,11 +146,13 @@ const styles = StyleSheet.create({
   timerContent: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
+    marginHorizontal: 5,
   },
   timerText: {
     color: 'green',
     fontSize: 13,
     fontWeight: 'bold',
+    width: 60,
   },
   headerContainer: {
     flexDirection: 'row',

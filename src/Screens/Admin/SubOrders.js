@@ -268,6 +268,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 16,
     fontFamily: Fonts.Bold,
+    color: Colors.orange,
   },
   dishContainer: {
     borderWidth: 0,
@@ -393,11 +394,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: 'center',
     fontFamily: Fonts.Bold,
+    color: Colors.orange,
   },
   modalText: {
     fontSize: 16,
     textAlign: 'center',
     fontFamily: Fonts.Medium,
+    color: 'black',
   },
   modalButtons: {
     flexDirection: 'row',

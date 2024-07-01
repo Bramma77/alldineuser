@@ -10,6 +10,8 @@ import {
   FlatList,
   ScrollView,
   StyleSheet,
+  BackHandler,
+  Alert,
 } from 'react-native';
 import Colors from '../Utilities/Colors';
 import Fonts from '../Utilities/Fonts';
@@ -88,8 +90,48 @@ const Dashboard = () => {
     },
   ];
 
+  const backPressCount = useRef(0);
+
   useEffect(() => {
-    clearCart();
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const handleBackPress = () => {
+    if (navigation.isFocused()) {
+      backPressCount.current += 1;
+
+      if (backPressCount.current === 1) {
+        Alert.alert(
+          'Exit App',
+          'Are you sure you want to exit?',
+          [
+            {text: 'Cancel', onPress: resetBackPressCount, style: 'cancel'},
+            {text: 'OK', onPress: () => BackHandler.exitApp()},
+          ],
+          {cancelable: false},
+        );
+      } else {
+        Alert.alert('Hold on!', 'Press back again to exit.');
+        setTimeout(resetBackPressCount, 1000); // Reset back press count after 2 seconds
+      }
+
+      return true;
+    }
+
+    return false;
+  };
+
+  const resetBackPressCount = () => {
+    backPressCount.current = 0;
+  };
+
+  useEffect(() => {
+    // clearCart();
     // const fetchCart = async () => {
     //   const storedCart = await AsyncStorage.getItem('cart');
     //   console.log("Assytored",JSON.parse(storedCart))

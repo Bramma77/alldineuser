@@ -1,12 +1,61 @@
-import {StyleSheet, Text, View, TouchableOpacity} from 'react-native';
-import React from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+  Modal,
+  Button,
+} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import Fonts from '../Utilities/Fonts';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Feather from 'react-native-vector-icons/Feather';
+import Octicons from 'react-native-vector-icons/Octicons';
+// import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import auth from '@react-native-firebase/auth';
 import {CommonActions} from '@react-navigation/native';
+import database from '@react-native-firebase/database';
+import Colors from '../Utilities/Colors';
 
 const Profile = ({navigation}) => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [profileData, setProfileData] = useState({
+    name: '',
+    mobile: '',
+    email: '',
+    dob: '',
+    gender: '',
+  });
+
+  useEffect(() => {
+    const loadProfileData = async () => {
+      try {
+        const currentuser = auth().currentUser?.uid;
+        const userRef = database().ref(`usersList/${currentuser}`);
+        userRef.on('value', snapshot => {
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            setProfileData(userData);
+          }
+        });
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    loadProfileData();
+  }, []);
+
+  const ToProfile = () => {
+    navigation.navigate('EditProfile');
+  };
+
+  const ToOrders = () => {
+    navigation.navigate('Myorder');
+  };
+  const ToPolicy = () => {
+    navigation.navigate('PrivacyPolicy');
+  };
+
   const signout = () => {
     auth()
       .signOut()
@@ -29,72 +78,81 @@ const Profile = ({navigation}) => {
     <View style={styles.container}>
       <View style={styles.profileContainer}>
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>S</Text>
+          <Text style={styles.avatarText}>
+            {profileData.name ? profileData.name.charAt(0) : ' '}
+          </Text>
         </View>
         <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
           <View style={styles.infoContainer}>
-            <Text style={styles.nameText}>Sant</Text>
-            <Text style={styles.emailText}>+912324242424</Text>
+            <Text style={styles.nameText}>{profileData.name}</Text>
+            <Text style={styles.emailText}>{profileData.email}</Text>
           </View>
         </TouchableOpacity>
       </View>
-      <View style={styles.profile}>
+
+      <TouchableOpacity onPress={ToProfile} style={styles.profile}>
         {/* <Text style={styles.header}>Profile</Text> */}
         <View style={styles.body}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <View style={styles.icon}>
-              <Feather name="user" size={25} color={'black'} />
+              <Feather name="user" size={20} color={'black'} />
             </View>
             <Text style={styles.text}>Your Profile</Text>
           </View>
           <MaterialIcons name="navigate-next" size={25} color={'black'} />
         </View>
-      </View>
+      </TouchableOpacity>
 
-      <View style={styles.profile}>
+      <TouchableOpacity onPress={ToOrders} style={styles.profile}>
         {/* <Text style={styles.header}>Orders</Text> */}
         <View style={styles.body}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <View style={styles.icon}>
-              <Feather name="user" size={25} color={'black'} />
+              <Octicons name="history" size={20} color={'black'} />
             </View>
             <Text style={styles.text}>Order History</Text>
           </View>
           <MaterialIcons name="navigate-next" size={25} color={'black'} />
         </View>
-      </View>
+      </TouchableOpacity>
 
-      <View style={styles.profile}>
+      <TouchableOpacity onPress={ToPolicy} style={styles.profile}>
         {/* <Text style={styles.header}>Pr</Text> */}
         <View style={styles.body}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <View style={styles.icon}>
-              <Feather name="user" size={25} color={'black'} />
+              <MaterialIcons name="privacy-tip" size={20} color={'black'} />
             </View>
             <Text style={styles.text}>Privacy policy</Text>
           </View>
           <MaterialIcons name="navigate-next" size={25} color={'black'} />
         </View>
-      </View>
-      <View style={styles.profile}>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={styles.profile}>
         {/* <Text style={styles.header}>Rating</Text> */}
         <View style={styles.body}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <View style={styles.icon}>
-              <Feather name="user" size={25} color={'black'} />
+              <MaterialIcons name="rate-review" size={20} color={'black'} />
             </View>
-            <Text style={[styles.text, {marginLeft: 20}]}>Rating</Text>
+            <Text style={[styles.text, {marginLeft: 20}]}>
+              Feedback & Rating
+            </Text>
           </View>
           <MaterialIcons name="navigate-next" size={25} color={'black'} />
         </View>
-      </View>
+      </TouchableOpacity>
+
       <TouchableOpacity onPress={signout}>
         <View style={styles.profile}>
           {/* <Text style={styles.header}>Profile</Text> */}
           <View style={styles.body}>
             <View style={{flexDirection: 'row', alignItems: 'center'}}>
               <View style={styles.icon}>
-                <Feather name="user" size={25} color={'black'} />
+                <Feather name="log-out" size={20} color={'black'} />
               </View>
               <Text style={styles.text}>Logout</Text>
             </View>
@@ -102,6 +160,26 @@ const Profile = ({navigation}) => {
           </View>
         </View>
       </TouchableOpacity>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}>
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>
+              Feedback & Ratings feature will be coming soon!
+            </Text>
+            <TouchableOpacity
+              style={[styles.button, styles.buttonClose]}
+              onPress={() => setModalVisible(!modalVisible)}>
+              <Text style={styles.textStyle}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -151,11 +229,13 @@ const styles = StyleSheet.create({
     color: 'black',
     fontSize: 25,
     fontFamily: Fonts.SemiBold,
+    width: 245,
   },
   emailText: {
     color: 'black',
     fontSize: 12.5,
     fontFamily: Fonts.Regular,
+    width: 245,
   },
   profile: {
     marginHorizontal: 10,
@@ -179,6 +259,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  button: {
+    padding: 10,
+    backgroundColor: '#2196F3',
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  buttonClose: {
+    backgroundColor: '#F194FF',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontFamily: Fonts.Regular,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 18,
+    color: Colors.orange,
+    fontFamily: Fonts.Regular,
   },
 });
 
