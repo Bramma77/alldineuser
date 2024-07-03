@@ -2,9 +2,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {firebase} from '@react-native-firebase/database';
 import auth from '@react-native-firebase/auth';
 
-const currentuser = auth().currentUser.uid;
+// const currentuser = auth().currentUser.uid;
 
 const addtowish = async key => {
+  const currentuser = auth().currentUser.uid;
   console.log('key', key);
   firebase
     .database()
@@ -19,6 +20,7 @@ const addtowish = async key => {
 };
 
 const removeFromWishlist = async key => {
+  const currentuser = auth().currentUser.uid;
   firebase
     .database()
     .ref(`wishlist/${currentuser}/${key}`)
@@ -32,8 +34,12 @@ const removeFromWishlist = async key => {
 };
 
 const getWishlist = currentuser => {
+  // const currentuser = auth().currentUser.uid;
   return new Promise((resolve, reject) => {
-    const wishlistRef = firebase.database().ref('wishlist').child(currentuser);
+    const wishlistRef = firebase
+      .database()
+      .ref('wishlist')
+      .child(`${currentuser}`);
     wishlistRef.on(
       'value',
       snapshot => {

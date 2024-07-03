@@ -37,6 +37,7 @@ const OTP = ({route}) => {
       console.log(numberString);
       await confirm.confirm(numberString);
       console.log('Phone number verified!');
+      // navigation.navigate('EditProfile');
       navigation.navigate('Drawer');
     } catch (error) {
       console.log('Invalid code.');
@@ -148,6 +149,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '80%',
     borderWidth: 0,
+    justifyContent: 'center',
   },
   input: {
     width: '20%',

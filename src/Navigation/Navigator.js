@@ -312,9 +312,9 @@ const Navigator = () => {
         <Stack.Navigator
           // initialRouteName="AdminDashboard"
           //initialRouteName="MyAdminTabs"
-          initialRouteName="AdminLogin"
+          // initialRouteName="AdminLogin"
           //initialRouteName='Drawer'
-          // initialRouteName="Splash"
+          initialRouteName="Splash"
 
           // screenOptions={{headerShown:false}}
         >
@@ -358,6 +358,7 @@ const Navigator = () => {
             component={EditProfile}
             options={{headerShown: true, title: 'Edit Profile'}}
           />
+          <Stack.Screen name="Profile" component={Profile} />
           <Stack.Screen
             name="AdminLogin"
             component={AdminLogin}

@@ -5,6 +5,7 @@ import {firebase} from '@react-native-firebase/database';
 import {RestaurantsData} from '../Component/Restaruntdata';
 import {Orders} from '../Component/Orders';
 import {useNavigation} from '@react-navigation/native';
+import {database} from '../Component/addtoWishlist';
 
 const CartContext = createContext();
 
@@ -52,40 +53,47 @@ export const CartProvider = ({children}) => {
 
   const getorderlist = async () => {
     try {
-      if (currentuser) {
-        const data = await Orders.Orderlist(currentuser);
-        setOrderlist(data);
-      }
+      const data = await Orders.Orderlist(currentuser);
+      setOrderlist(data);
     } catch (error) {
       console.error('Error fetching order list:', error);
     }
   };
 
+  const list = async () => {
+    if (currentuser) {
+      const wishlistRef = firebase
+        .database()
+        .ref('wishlist')
+        .child(`${currentuser}`);
+      wishlistRef.on('value', snapshot => {
+        const data = snapshot.val();
+        if (data !== null) {
+          const finaldata = Object.keys(data);
+          setWishlistdata(finaldata);
+        } else {
+          console.log('No wishlist data');
+        }
+      });
+
+      // Cleanup listener
+      return () => {
+        wishlistRef.off();
+      };
+    }
+  };
+
   useEffect(() => {
     getorderlist();
-  }, []);
+  }, [currentuser]);
 
   useEffect(() => {
     RestaurantsInfo();
-    const wishlistRef = firebase
-      .database()
-      .ref('wishlist')
-      .child(`${currentuser}`);
-    wishlistRef.on('value', snapshot => {
-      const data = snapshot.val();
-      if (data !== null) {
-        const finaldata = Object.keys(data);
-        setWishlistdata(finaldata);
-      } else {
-        console.log('No wishlist data');
-      }
-    });
-
-    // Cleanup listener
-    return () => {
-      wishlistRef.off();
-    };
-  }, []);
+    getorderlist(currentuser);
+    list();
+    updateOrderList();
+    // getResponseWishlist(currentuser);
+  }, [currentuser]);
 
   const updateOrderList = updatedOrderList => {
     setOrderlist(updatedOrderList);
@@ -235,6 +243,7 @@ export const CartProvider = ({children}) => {
         setConfirm,
         CurrentUser,
         Wishlistdata,
+        setWishlistdata,
         getorderlist,
         getResponseWishlist,
         Restaurantdata,

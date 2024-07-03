@@ -192,7 +192,7 @@ const EditProfile = ({navigation}) => {
       setEditable(false);
 
       // Navigate back after successful update
-      navigation.goBack();
+      navigation.navigate('Profile');
 
       // Show success message after updating profile
       Alert.alert('Success', 'Profile updated successfully!');
