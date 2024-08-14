@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {View, Text, SafeAreaView} from 'react-native';
+import {View, Text, SafeAreaView, Platform, Alert} from 'react-native';
 import LoginScreen from './src/Screens/Login';
 import Navigator from './src/Navigation/Navigator';
 import PushNotification from 'react-native-push-notification';
@@ -21,23 +21,45 @@ const App = () => {
       console.log('Authorization status:', authStatus);
     }
   }
+
+  async function requestExactAlarmPermission() {
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      const hasPermission = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.SCHEDULE_EXACT_ALARM,
+      );
+      if (!hasPermission) {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.SCHEDULE_EXACT_ALARM,
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('Exact Alarm Permission Granted');
+        } else {
+          console.log('Exact Alarm Permission Denied');
+        }
+      }
+    }
+  }
+
   useEffect(() => {
     requestUserPermission();
     requestPermission();
+    // requestExactAlarmPermission();
   }, []);
 
   const requestPermission = async () => {
     try {
       const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS, // or POST_NOTIFICATIONS
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
       );
 
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('granded');
+        console.log('Notification Permission Granted');
       } else {
-        console.log('not granded');
+        console.log('Notification Permission Denied');
       }
-    } catch (err) {}
+    } catch (err) {
+      console.error('Permission Error:', err);
+    }
   };
   // const req=async()=>{
   //   if (Platform.OS == 'android' && DeviceInfo.getApiLevelSync() >= 33) {
@@ -51,7 +73,6 @@ const App = () => {
   // },[])
 
   useEffect(() => {
-    // Request permissions for receiving notifications
     const requestPermission = async () => {
       try {
         await messaging().requestPermission();
@@ -63,17 +84,12 @@ const App = () => {
     };
     requestPermission();
 
-    // Listen for background messages (when app is in background or terminated)
     const unsubscribeBackground = messaging().onMessage(async remoteMessage => {
       console.log(remoteMessage);
-
-      //Alert.alert('Background Message', JSON.stringify(remoteMessage));
     });
 
-    // Listen for foreground messages (when app is in foreground)
     const unsubscribeForeground = messaging().onMessage(async remoteMessage => {
       console.log(remoteMessage);
-      // Alert.alert('Foreground Message', JSON.stringify(remoteMessage));
     });
 
     return () => {
@@ -84,33 +100,25 @@ const App = () => {
 
   useEffect(() => {
     firebase.messaging().onMessage(response => {
-      //console.log(JSON.stringify(response));
-      if (Platform.OS != 'ios') {
-        //  PushNotification.requestPermissions();
+      if (Platform.OS !== 'ios') {
         console.log('notification', response);
         showNotification(response);
-
-        // console.log('notification android',response)
-
         return;
       }
-      //  PushNotificationIOS.requestPermissions().then(() =>
-      //      showNotification(response.notification),
-
-      //  );
     });
   }, []);
 
   PushNotification.createChannel(
     {
-      channelId: 'channel-id-1', // (required)
+      channelId: 'channel-id-1',
       channelName: 'My channel',
-      playSound: true, // (optional) default: true
-      soundName: 'default', // (optional) See `soundName` parameter of `localNotification` function
-      vibrate: true, // (optional) default: true. Creates the default vibration patten if true.
+      playSound: true,
+      soundName: 'default',
+      vibrate: true,
     },
-    created => console.log(`createChannel returned '${created}'`), // (optional) callback returns whether the channel was created, false means it already existed.
+    created => console.log(`createChannel returned '${created}'`),
   );
+
   const showNotification = notification => {
     console.log('responsed notification', notification.notification.body);
 
@@ -120,10 +128,12 @@ const App = () => {
       message: notification.notification.body,
     });
   };
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <Navigator />
     </SafeAreaView>
   );
 };
+
 export default App;

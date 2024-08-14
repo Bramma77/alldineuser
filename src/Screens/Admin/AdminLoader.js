@@ -18,15 +18,23 @@ const AdminLoader = ({navigation}) => {
   const adminlogin = async () => {
     const userData = JSON.parse(await AsyncStorage.getItem('AdminUser'));
     console.log('userdsa', userData);
-    setAccessToken(userData.AccessToken);
-
+    //  setAccessToken(userData.AccessToken);
     if (userData) {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 1,
-          routes: [{name: 'SubAdminDashboard'}],
-        }),
-      );
+      if (userData.AccessToken === '000000') {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [{name: 'AdminDashboard'}],
+          }),
+        );
+      } else if (userData.AccessToken != '000000') {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [{name: 'SubAdminDashboard'}],
+          }),
+        );
+      }
     } else {
       navigation.dispatch(
         CommonActions.reset({

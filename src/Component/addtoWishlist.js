@@ -13,6 +13,7 @@ const addtowish = async key => {
     .set(true)
     .then(() => {
       console.log('Added to wishlist successfully!');
+      getWishlist(currentuser);
     })
     .catch(error => {
       console.error('Error adding to wishlist: ', error);
@@ -27,6 +28,7 @@ const removeFromWishlist = async key => {
     .remove()
     .then(() => {
       console.log('Removed from wishlist successfully!');
+      getWishlist(currentuser);
     })
     .catch(error => {
       console.error('Error removing from wishlist: ', error);

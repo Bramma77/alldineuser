@@ -9,6 +9,7 @@ import {
   FlatList,
   ScrollView,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import Colors from '../../Utilities/Colors';
 import Fonts from '../../Utilities/Fonts';
@@ -33,6 +34,7 @@ const SubAdmin = ({navigation, route}) => {
   const [ResData, setResData] = useState({});
   const [isEditing, setIsEditing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const {Resname} = route.params || {};
 
@@ -60,6 +62,7 @@ const SubAdmin = ({navigation, route}) => {
     await ref.on('value', snapshot => {
       if (!snapshot.exists()) {
         setShow(false);
+        setLoading(false);
       } else {
         setShow(true);
         const data = snapshot.val();
@@ -71,6 +74,7 @@ const SubAdmin = ({navigation, route}) => {
         setShortDes(data.ShortDes);
         setLongDes(data.LongDes);
         setDownloadUrl(data.DownloadUrl);
+        setLoading(false);
       }
     });
     return () => {
@@ -160,7 +164,11 @@ const SubAdmin = ({navigation, route}) => {
 
   return (
     <View style={{flex: 1}}>
-      {Show ? (
+      {loading ? (
+        <View style={Styles.loader}>
+          <ActivityIndicator size="large" color={Colors.orange} />
+        </View>
+      ) : Show ? (
         isEditing ? (
           <ScrollView>
             <View style={{flex: 1}}>

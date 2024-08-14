@@ -14,9 +14,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import database from '@react-native-firebase/database';
 import {firebase} from '@react-native-firebase/auth';
 
-const AvailabilityFood = ({navigation}) => {
+const AdminAvailabilityFood = ({navigation, route}) => {
   const [Dishes, setDishes] = useState([]);
   const [AccessToken, setAccessToken] = useState(false);
+  const {Id} = route.params;
 
   const Data = [
     {
@@ -48,7 +49,7 @@ const AvailabilityFood = ({navigation}) => {
       await firebase
         .database()
         .ref('RestaurantsData')
-        .child(userData.AccessToken)
+        .child(Id)
         .child(`Dishes/${key}`)
         .update({Availability: status});
       console.log('Order status updated successfully.');
@@ -62,7 +63,7 @@ const AvailabilityFood = ({navigation}) => {
   };
   const showdishes = async () => {
     const userData = JSON.parse(await AsyncStorage.getItem('AdminUser'));
-    const ref = database().ref('RestaurantsData').child(userData.AccessToken);
+    const ref = database().ref('RestaurantsData').child(Id);
 
     await ref.child('Dishes').on('value', snapshot => {
       const items = snapshot.val() ? Object.entries(snapshot.val()) : [];
@@ -140,7 +141,7 @@ const AvailabilityFood = ({navigation}) => {
                 />
 
                 <View>
-                  <Text 
+                  <Text
                     style={{
                       fontSize: 15,
                       fontFamily: Fonts.Bold,
@@ -148,7 +149,6 @@ const AvailabilityFood = ({navigation}) => {
                       width: 170,
                       // borderWidth: 1,
                     }}>
-                    
                     {item.DishName}
                   </Text>
                   <Text
@@ -158,7 +158,6 @@ const AvailabilityFood = ({navigation}) => {
                       color: 'black',
                     }}>
                     ₹{item.DishPrice}
-                   
                   </Text>
                   <Text
                     style={{
@@ -195,7 +194,9 @@ const AvailabilityFood = ({navigation}) => {
                     name="check"
                     size={22}
                     color={
-                      item.Availability === 'Available' ? 'green' : 'black'
+                      item.Availability === 'Available'
+                        ? 'green'
+                        : 'transparent'
                     }
                   />
                 </View>
@@ -208,4 +209,4 @@ const AvailabilityFood = ({navigation}) => {
     </View>
   );
 };
-export default AvailabilityFood;
+export default AdminAvailabilityFood;

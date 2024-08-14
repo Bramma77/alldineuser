@@ -51,7 +51,7 @@ const RestaurantList = ({navigation}) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Restaurants List</Text>
+      {/* <Text style={styles.header}>Restaurants List</Text> */}
       <FlatList
         data={restaurants}
         renderItem={renderItem}

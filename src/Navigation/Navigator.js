@@ -45,6 +45,12 @@ import AdminLoader from '../Screens/Admin/AdminLoader';
 import PrivacyPolicy from '../Screens/PrivacyPolicy';
 import RestaurantList from '../Screens/Admin/RestaurantList';
 import RestataurantDetail from '../Screens/RestataurantDetail';
+import Fonts from '../Utilities/Fonts';
+import Adminorders from '../Screens/Admin/Adminorders';
+import AdminAvailabilityFood from '../Screens/Admin/AdminAvailabilityFood';
+import OrderDetailView from '../Screens/Admin/OrderDetailView';
+import Ratereview from '../Screens/Ratereview';
+import Restaurant from '../React-Native/Restaurant';
 
 const Stack = createNativeStackNavigator();
 
@@ -71,7 +77,7 @@ function MyTabs({route, navigation}) {
 
           headerRightContainerStyle: {margin: 0},
           headerRight: () => (
-            <Icon
+            <Icon1
               name="shoppingcart"
               color={Colors.orange}
               size={22}
@@ -217,8 +223,8 @@ const BottomTab = ({navigation}) => {
             iconName = 'heart-outline';
           } else if (route.name === 'Re-Order') {
             iconName = 'cookie-refresh-outline';
-          } else if (route.name === 'Profile') {
-            iconName = 'account-edit';
+          } else if (route.name === 'Orderscreen') {
+            iconName = 'cart-outline';
           }
           return <Icon1 name={iconName} size={size} color={color} />;
         },
@@ -229,14 +235,22 @@ const BottomTab = ({navigation}) => {
         name="Home"
         component={Dashboard}
         options={{
-          title: 'Home',
-          headerRight: () => (
+          title: 'Dashboard',
+          headerLeft: () => (
             <Icon
-              name="shoppingcart"
+              name="home"
+              color={Colors.orange}
+              size={22}
+              style={{marginLeft: 25}}
+            />
+          ),
+          headerRight: () => (
+            <Icon1
+              name={'account-edit'}
               color={Colors.orange}
               size={22}
               style={{marginRight: 25}}
-              onPress={() => navigation.navigate('Orderscreen')}
+              onPress={() => navigation.navigate('Profile')}
             />
           ),
           headerStyle: {
@@ -286,12 +300,19 @@ const BottomTab = ({navigation}) => {
           },
         }}
       />
+      {/* <Icon
+        name="shoppingcart"
+        color={Colors.orange}
+        size={22}
+        style={{marginRight: 25}}
+        onPress={() => navigation.navigate('Orderscreen')}
+      /> */}
       <Tab.Screen
-        name="Profile"
-        component={Profile}
+        name="Orderscreen"
+        component={Orderscreen}
         options={{
-          title: 'Profile',
-
+          title: 'Cart',
+          headerShown: false,
           headerStyle: {
             backgroundColor: 'white',
           },
@@ -313,21 +334,46 @@ const Navigator = () => {
           // initialRouteName="AdminDashboard"
           //initialRouteName="MyAdminTabs"
           // initialRouteName="AdminLogin"
+          // initialRouteName="AdminLoader"
           //initialRouteName='Drawer'
           initialRouteName="Splash"
+          // initialRouteName="Restaurant"
 
           // screenOptions={{headerShown:false}}
         >
           <Stack.Screen
+            name="Restaurant"
+            component={Restaurant}
+            options={{headerShown: false}}
+          />
+          <Stack.Screen
             name="Mypager"
             component={MyPager}
             options={{headerShown: false}}
+          />
+
+          <Stack.Screen
+            name="Adminorders"
+            component={Adminorders}
+            // options={{headerShown: false}}
+            options={{
+              title: 'Order List',
+              headerStyle: {
+                backgroundColor: '#fff', // Custom header background color
+              },
+              headerTitleStyle: {
+                fontFamily: Fonts.Medium,
+                fontSize: 18, // Custom font size
+              },
+              headerTintColor: 'black', // Custom text color
+            }}
           />
           <Stack.Screen
             name="SubAdminDashboard"
             component={SubAdminDashboard}
             options={{headerShown: false}}
           />
+
           <Stack.Screen
             name="OrderStatus"
             component={OrderStatus}
@@ -336,12 +382,42 @@ const Navigator = () => {
           <Stack.Screen
             name="RestaurantList"
             component={RestaurantList}
-            options={{headerShown: false}}
+            // options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="OrderDetailView"
+            component={OrderDetailView}
+            // options={{headerShown: false}}
           />
           <Stack.Screen
             name="AddDishes"
             component={AddDishes}
-            options={{headerShown: false}}
+            options={{
+              title: 'AddDishes',
+              headerStyle: {
+                backgroundColor: '#fff', // Custom header background color
+              },
+              headerTitleStyle: {
+                fontFamily: Fonts.Medium,
+                fontSize: 18, // Custom font size
+              },
+              headerTintColor: 'black', // Custom text color
+            }}
+          />
+          <Stack.Screen
+            name="AdminAvailabilityFood"
+            component={AdminAvailabilityFood}
+            options={{
+              title: 'Dishes',
+              headerStyle: {
+                backgroundColor: '#fff', // Custom header background color
+              },
+              headerTitleStyle: {
+                fontFamily: Fonts.Medium,
+                fontSize: 18, // Custom font size
+              },
+              headerTintColor: 'black', // Custom text color
+            }}
           />
           <Stack.Screen
             name="AdminLoader"
@@ -351,7 +427,17 @@ const Navigator = () => {
           <Stack.Screen
             name="DishesList"
             component={DishesList}
-            options={{headerShown: false}}
+            options={{
+              title: 'Dishes',
+              headerStyle: {
+                backgroundColor: '#fff', // Custom header background color
+              },
+              headerTitleStyle: {
+                fontFamily: Fonts.Medium,
+                fontSize: 18, // Custom font size
+              },
+              headerTintColor: 'black', // Custom text color
+            }}
           />
           <Stack.Screen
             name="EditProfile"
@@ -397,22 +483,52 @@ const Navigator = () => {
           <Stack.Screen
             name="SubAdmin"
             component={SubAdmin}
-            options={{headerShown: false}}
+            options={{
+              title: 'Restaurant Info',
+              headerStyle: {
+                backgroundColor: '#fff', // Custom header background color
+              },
+              headerTitleStyle: {
+                fontFamily: Fonts.Medium,
+                fontSize: 18, // Custom font size
+              },
+              headerTintColor: 'black', // Custom text color
+            }}
           />
           <Stack.Screen
             name="SubOrder"
             component={SubOrder}
-            options={{headerShown: false}}
+            options={{
+              title: 'Orders',
+              headerStyle: {
+                backgroundColor: '#fff', // Custom header background color
+              },
+              headerTitleStyle: {
+                fontFamily: Fonts.Medium,
+                fontSize: 18, // Custom font size
+              },
+              headerTintColor: 'black', // Custom text color
+            }}
           />
           <Stack.Screen
             name="AvailabilityFood"
             component={AvailabilityFood}
-            options={{headerShown: false}}
+            options={{
+              title: 'Availability',
+              headerStyle: {
+                backgroundColor: '#fff', // Custom header background color
+              },
+              headerTitleStyle: {
+                fontFamily: Fonts.Bold,
+                fontSize: 18, // Custom font size
+              },
+              headerTintColor: 'black', // Custom text color
+            }}
           />
           <Stack.Screen
             name="Token"
             component={Token}
-            options={{headerShown: false}}
+            // options={{headerShown: false}}
           />
           <Stack.Screen
             name="Hotels"
@@ -449,6 +565,22 @@ const Navigator = () => {
             name="OTP"
             component={OTP}
             options={{headerShown: false}}
+          />
+          <Stack.Screen
+            name="Ratereview"
+            component={Ratereview}
+            // options={{headerShown: false}}
+            options={{
+              title: 'Rating',
+              headerStyle: {
+                backgroundColor: '#fff', // Custom header background color
+              },
+              headerTitleStyle: {
+                fontFamily: Fonts.Bold,
+                fontSize: 18, // Custom font size
+              },
+              headerTintColor: 'black', // Custom text color
+            }}
           />
           <Stack.Screen
             name="Drawer"

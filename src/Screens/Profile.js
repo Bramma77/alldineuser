@@ -5,6 +5,8 @@ import {
   TouchableOpacity,
   Modal,
   Button,
+  Linking,
+  Alert,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import Fonts from '../Utilities/Fonts';
@@ -73,24 +75,45 @@ const Profile = ({navigation}) => {
         );
       });
   };
+  const handlePress = async () => {
+    // Check if the URL is supported
+    const supported = await Linking.canOpenURL(url);
+
+    if (supported) {
+      // If the URL is supported, open it
+      await Linking.openURL(url);
+    } else {
+      // If the URL is not supported, show an alert
+      Alert.alert(`Don't know how to open this URL: ${url}`);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.profileContainer}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
-            {profileData.name ? profileData.name.charAt(0) : ' '}
+            {profileData.name ? profileData.name.charAt(0) : ''}
           </Text>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => navigation.navigate('EditProfile')}>
           <View style={styles.infoContainer}>
-            <Text style={styles.nameText}>{profileData.name}</Text>
-            <Text style={styles.emailText}>{profileData.email}</Text>
+            <Text style={styles.nameText}>
+              {profileData.name ? profileData.name : 'Name'}
+            </Text>
+            <Text style={styles.emailText}>
+              {profileData.email ? profileData.email : 'Email'}
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity onPress={ToProfile} style={styles.profile}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={ToProfile}
+        style={styles.profile}>
         {/* <Text style={styles.header}>Profile</Text> */}
         <View style={styles.body}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -103,7 +126,10 @@ const Profile = ({navigation}) => {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={ToOrders} style={styles.profile}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={ToOrders}
+        style={styles.profile}>
         {/* <Text style={styles.header}>Orders</Text> */}
         <View style={styles.body}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -116,7 +142,10 @@ const Profile = ({navigation}) => {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={ToPolicy} style={styles.profile}>
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={ToPolicy}
+        style={styles.profile}>
         {/* <Text style={styles.header}>Pr</Text> */}
         <View style={styles.body}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
@@ -129,10 +158,11 @@ const Profile = ({navigation}) => {
         </View>
       </TouchableOpacity>
 
-      <TouchableOpacity
+      {/* <TouchableOpacity
+        activeOpacity={1}
         onPress={() => setModalVisible(true)}
         style={styles.profile}>
-        {/* <Text style={styles.header}>Rating</Text> */}
+      
         <View style={styles.body}>
           <View style={{flexDirection: 'row', alignItems: 'center'}}>
             <View style={styles.icon}>
@@ -144,9 +174,10 @@ const Profile = ({navigation}) => {
           </View>
           <MaterialIcons name="navigate-next" size={25} color={'black'} />
         </View>
-      </TouchableOpacity>
+      </TouchableOpacity> 
+      */}
 
-      <TouchableOpacity onPress={signout}>
+      <TouchableOpacity activeOpacity={1} onPress={signout}>
         <View style={styles.profile}>
           {/* <Text style={styles.header}>Profile</Text> */}
           <View style={styles.body}>

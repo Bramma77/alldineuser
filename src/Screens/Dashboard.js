@@ -1,12 +1,14 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   Text,
+  RefreshControl,
   View,
   SafeAreaView,
   StatusBar,
   Dimensions,
   Image,
   TextInput,
+  TouchableOpacity,
   FlatList,
   ScrollView,
   StyleSheet,
@@ -35,6 +37,7 @@ import {
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
 import Feather from 'react-native-vector-icons/Feather';
+import auth from '@react-native-firebase/auth';
 
 const Dashboard = () => {
   const width = Dimensions.get('window').width;
@@ -44,9 +47,18 @@ const Dashboard = () => {
   const scrollViewRef = useRef(null);
   const navigation = useNavigation();
   const [Restaruants, setRestarunts] = useState([]);
-  const {clearCart, Restaurantdata} = useCart();
+  const {
+    clearCart,
+    Restaurantdata,
+    getWishlist,
+    getorderlist,
+    cartHasItems,
+    setCartHasItems,
+    Cartcount,
+  } = useCart();
   const [filteredRestaurants, setFilteredRestaurants] = useState([]);
   const [searchText, setSearchText] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const Images = [
     {
@@ -156,9 +168,21 @@ const Dashboard = () => {
   // };
 
   const filterRestaurants = text => {
-    const filteredData = Restaurantdata.filter(item =>
-      item.Restaurantname.toLowerCase().includes(text.toLowerCase()),
-    );
+    const filteredData = Restaurantdata.filter(item => {
+      // Check if the restaurant name includes the search text
+      const isRestaurantMatch = item.Restaurantname.toLowerCase().includes(
+        text.toLowerCase(),
+      );
+
+      // Check if any dish name includes the search text
+      const isDishMatch = Object.values(item.Dishes).some(dish =>
+        dish.DishName.toLowerCase().includes(text.toLowerCase()),
+      );
+
+      // Return true if either the restaurant name or any dish name matches the search text
+      return isRestaurantMatch || isDishMatch;
+    });
+
     setFilteredRestaurants(filteredData);
   };
 
@@ -174,11 +198,24 @@ const Dashboard = () => {
   //     //  console.log(formattedData);
   //   });
   // };
+  const onRefresh = useCallback(() => {
+    const currentuser = auth().currentUser?.uid;
+    setRefreshing(true);
+    getWishlist(currentuser);
+    getorderlist(currentuser);
 
-  useEffect(() => {
-    // HotelList();
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 2000);
   }, []);
 
+  useEffect(() => {
+    const currentuser = auth().currentUser?.uid;
+    getWishlist(currentuser);
+    getorderlist(currentuser);
+  }, []);
+
+  const [scrollEnabled, setScrollEnabled] = useState(true);
   return (
     <View style={{flex: 1, backgroundColor: 'white'}}>
       <SafeAreaView
@@ -199,9 +236,13 @@ const Dashboard = () => {
             marginVertical: responsiveHeight(1),
             borderRadius: 5,
             backgroundColor: '#fff',
-            elevation: 10,
+            elevation: 0,
+            // height: 45,
+            borderWidth: 1,
+            borderColor: 'gray',
+            borderRadius: 10,
             flexDirection: 'row',
-            justifyContent: 'flex-start',
+
             alignItems: 'center',
           }}>
           <Feather
@@ -211,32 +252,55 @@ const Dashboard = () => {
             color={Colors.orange}
           />
           <TextInput
-            style={{fontSize: 16, height: 45, color: 'black'}}
+            numberOfLines={1}
+            scrollEnabled={false}
+            style={{
+              fontSize: 16,
+              // height: 40,
+              borderWidth: 0,
+
+              color: 'black',
+              fontFamily: Fonts.Medium,
+              marginRight: 30,
+            }}
             placeholderTextColor={'gray'}
-            placeholder="Search"
+            placeholder="  Search   "
             value={searchText}
             onChangeText={text => setSearchText(text)}
           />
         </View>
-        <ScrollView>
-          <View style={{borderWidth: 0, alignItems: 'center', height: 210}}>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+          scrollEnabled={scrollEnabled}
+          disableScrollViewPanResponder={true}
+          showsVerticalScrollIndicator={false}
+          alwaysBounceVertical={false}>
+          <View style={{borderWidth: 0, alignItems: 'center', height: 220}}>
             <Carousel
               loop
               width={width}
-              height={width / 2}
+              height={200}
               autoPlay={true}
-              //  withAnimation={'rotate-in-out'}
+              withAnimation={{type: 'timing', config: {duration: 500}}}
               data={Images}
-              // layout={'tinder'}
-
-              pagingEnabled={true}
-              // snapEnabled={true}
+              layout={'tinder'}
               scrollAnimationDuration={2000}
               // panGestureHandlerProps={{
-              //     activeOffsetX: [-10, 10],
+              //   activeOffsetX: [-10, 10],
               // }}
+              panGestureHandlerProps={{
+                activeOffsetX: [-10, 10],
+                onStartShouldSetPanResponder: () => {
+                  setScrollEnabled(false);
+                  return true;
+                },
+                onPanResponderRelease: () => {
+                  setScrollEnabled(true);
+                },
+              }}
               onSnapToItem={index => {
-                // console.log(Math.round(index))
                 setIndex(Math.round(index));
               }}
               renderItem={({item, index}) => (
@@ -314,6 +378,21 @@ const Dashboard = () => {
             )}
           />
         </ScrollView>
+        {cartHasItems && (
+          <View style={styles.cartContainer}>
+            <Text style={styles.cartText}> {Cartcount} - Product Quantity</Text>
+            <TouchableOpacity
+              style={{
+                marginRight: responsiveWidth(1),
+                backgroundColor: Colors.white,
+                padding: 10,
+                borderRadius: 5,
+              }}
+              onPress={() => navigation.navigate('Orderscreen')}>
+              <Text style={styles.cartButtonText}>View Cart</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -325,5 +404,18 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Bold,
     color: 'black',
     marginLeft: 10,
+  },
+  cartContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.orange,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  cartText: {
+    fontFamily: Fonts.Bold,
+    fontSize: 16,
+    color: 'white',
   },
 });

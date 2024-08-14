@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import Colors from '../Utilities/Colors';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Feather from 'react-native-vector-icons/Feather';
+import {useFocusEffect} from '@react-navigation/native';
 
 const DetailView = ({route, navigation}) => {
   const {item} = route.params;
@@ -36,6 +37,9 @@ const DetailView = ({route, navigation}) => {
     setCart,
     CurrentUser,
     cart,
+    getCartItemCount,
+    cartHasItems,
+    setCartHasItems,
     increaseQuantity,
     // decreaseQuantity,
   } = useCart();
@@ -48,9 +52,10 @@ const DetailView = ({route, navigation}) => {
     price: '',
   });
   const [quantities, setQuantities] = useState({});
-  const [cartHasItems, setCartHasItems] = useState(false); // State to store quantities for each item
+  // const [cartHasItems, setCartHasItems] = useState(false); // State to store quantities for each item
   const reskey = item.key;
   const resname = item.Restaurantname;
+  const RestaurantLocation = item.RestaurantLocation;
 
   const [Quantitycount, setQuantitycount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,6 +82,11 @@ const DetailView = ({route, navigation}) => {
   const applyClearAll = () => {
     navigation.navigate('Drawer');
   };
+
+  // useEffect(()=>{
+  //   navigation.goBack()
+
+  // },[])
 
   const applyFilter = () => {
     let filteredData = [...Dataview];
@@ -205,7 +215,7 @@ const DetailView = ({route, navigation}) => {
     });
     setCart(newCart);
 
-    await AsyncStorage.setItem(`cart-${CurrentUser}`, JSON.stringify(newCart));
+    await AsyncStorage.setItem(`cart`, JSON.stringify(newCart));
   };
   const decreaseCount = async item => {
     const updatedCart = {...item};
@@ -236,8 +246,8 @@ const DetailView = ({route, navigation}) => {
       }),
     };
     setCart(newCart);
-    await AsyncStorage.setItem(`cart-${CurrentUser}`, JSON.stringify(newCart));
-    getCartItemCount();
+    await AsyncStorage.setItem(`cart`, JSON.stringify(newCart));
+    //  getCartItemCount();
   };
 
   useEffect(() => {
@@ -267,7 +277,13 @@ const DetailView = ({route, navigation}) => {
       setFilteredData1(filtered);
     }
   };
+  useFocusEffect(
+    React.useCallback(() => {
+      getCartItemCount();
 
+      return () => {};
+    }, []),
+  );
   return (
     <View style={{flex: 1, backgroundColor: '#f5f5f5'}}>
       <ScrollView>
@@ -435,6 +451,9 @@ const DetailView = ({route, navigation}) => {
                 }}>
                 <View>
                   <Text style={styles.foodItemTitle}>{item.DishName}</Text>
+
+                  {/* <Text style={styles.foodItemTitle}>{item.Availability}</Text> */}
+
                   {/* <Text style={styles.foodItemTitle}>{item.DishType}</Text> */}
                   <View style={styles.foodItemRating}>
                     <Text style={styles.ratingText}>4.4</Text>
@@ -458,7 +477,8 @@ const DetailView = ({route, navigation}) => {
                     source={{uri: item.DishesImage}}
                     style={{width: 145, height: 145, borderRadius: 10}}
                   />
-                  {quantities[item.key] ? (
+                  {quantities[item.key] &&
+                  checkQuantitycount(item.key) !== 0 ? (
                     <View style={styles.quantityContainer}>
                       <TouchableOpacity
                         onPress={() => decreaseQuantity(item.key)}>
@@ -474,20 +494,31 @@ const DetailView = ({route, navigation}) => {
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    <TouchableOpacity
-                      style={styles.addButton}
-                      onPress={
-                        () =>
-                          handleAddToCart({
-                            ...item,
-                            restaurantId: reskey,
-                            restaurantname: resname,
-                            Quantity: 1,
-                          })
-                        // addToCart({...item, restaurantId: reskey, Quantity: 1})
-                      }>
-                      <Text style={styles.addButtonText}>ADD+</Text>
-                    </TouchableOpacity>
+                    <>
+                      {item.Availability === 'NotAvailable' ? (
+                        <TouchableOpacity style={styles.addButton}>
+                          <Text style={styles.addButtonText}>
+                            Not Available
+                          </Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          style={styles.addButton}
+                          onPress={
+                            () =>
+                              handleAddToCart({
+                                ...item,
+                                restaurantId: reskey,
+                                restaurantname: resname,
+                                RestaurantLocation: RestaurantLocation,
+                                Quantity: 1,
+                              })
+                            // addToCart({...item, restaurantId: reskey, Quantity: 1})
+                          }>
+                          <Text style={styles.addButtonText}>ADD+</Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
                   )}
                 </View>
               </View>
@@ -497,7 +528,7 @@ const DetailView = ({route, navigation}) => {
       </ScrollView>
       {cartHasItems && (
         <View style={styles.cartContainer}>
-          <Text style={styles.cartText}>{Cartcount} - Product Quantity</Text>
+          <Text style={styles.cartText}> {Cartcount} - Product Quantity</Text>
           <TouchableOpacity
             style={{
               marginRight: responsiveWidth(1),

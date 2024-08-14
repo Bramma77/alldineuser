@@ -6,11 +6,36 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import React from 'react';
+import React, {useEffect} from 'react';
 import Fonts from '../Utilities/Fonts';
+import {firebase} from '@react-native-firebase/auth';
 
-const RestataurantDetail = ({route}) => {
+const RestataurantDetail = ({route, navigation}) => {
   const {restaurant} = route.params;
+
+  console.log('res', restaurant.key);
+
+  const totalfoodamount = async () => {
+    const ref = await firebase.database().ref('FoodOrders');
+    ref.on('value', snapshot => {
+      const items = snapshot.val() ? Object.entries(snapshot.val()) : [];
+      const formattedData = items.map(([key, value]) => ({key, ...value}));
+      // console.log(formattedData);
+      const newdata = formattedData.filter(
+        item => item.RestaurantId === '666666',
+      );
+      // const newdata1=newdata.reduce((item)=>item.TotalPrice)
+      // console.log('filtered data', newdata);
+      const newone = newdata
+        .reduce((total, item) => total + item.TotalPrice, 0)
+        .toFixed(2);
+      console.log('filtered data', newone);
+    });
+  };
+
+  useEffect(() => {
+    totalfoodamount();
+  }, []);
 
   return (
     <View style={{flex: 1, backgroundColor: 'white'}}>
@@ -133,6 +158,15 @@ const RestataurantDetail = ({route}) => {
             </Text>
           </View>
         </View>
+        {/* <View
+          style={{
+            height: 100,
+            width: 200,
+            borderWidth: 1,
+            marginLeft: 20,
+          }}>
+          <Text>Total Orders{}</Text>
+        </View> */}
         <View
           style={{
             flexDirection: 'row',
@@ -141,6 +175,9 @@ const RestataurantDetail = ({route}) => {
             paddingHorizontal: 20,
           }}>
           <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('AdminAvailabilityFood', {Id: restaurant.key})
+            }
             style={{
               height: 50,
               paddingLeft: 20,
@@ -160,10 +197,14 @@ const RestataurantDetail = ({route}) => {
                 color: 'white',
                 fontSize: 14,
               }}>
-              Order Count
+              Dishes List
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('Adminorders', {Id: restaurant.key})
+            }
             style={{
               height: 50,
               paddingLeft: 20,

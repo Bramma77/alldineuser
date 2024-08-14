@@ -21,7 +21,7 @@ import Colors from '../../Utilities/Colors';
 import Entypo from 'react-native-vector-icons/Entypo';
 import IonIcons from 'react-native-vector-icons/Ionicons';
 
-const SubOrder = ({navigation}) => {
+const Adminorders = ({route}) => {
   const {clearCart, Restaurantdata} = useCart();
   const [orderlist, setOrderlist] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -29,6 +29,11 @@ const SubOrder = ({navigation}) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [currentTab, setCurrentTab] = useState('new');
+  const [TotalAmount, setTotalAmount] = useState('');
+  const [newordercount, setnewordercount] = useState('');
+  const [deliveredcount, setdeliveredcount] = useState('');
+
+  const {Id} = route.params;
 
   useEffect(() => {
     getUser();
@@ -43,16 +48,35 @@ const SubOrder = ({navigation}) => {
       console.log(error);
     }
   };
+  const totalfoodamount = async () => {
+    const ref = await firebase.database().ref('FoodOrders');
+    ref.on('value', snapshot => {
+      const items = snapshot.val() ? Object.entries(snapshot.val()) : [];
+      const formattedData = items.map(([key, value]) => ({key, ...value}));
+      // console.log(formattedData);
+      const newdata = formattedData.filter(item => item.RestaurantId === Id);
+      // const newdata1=newdata.reduce((item)=>item.TotalPrice)
+      // console.log('filtered data', newdata);
+      const newone = newdata
+        .reduce((total, item) => total + item.TotalPrice, 0)
+        .toFixed(2);
+      console.log('filtered data', newone);
+    });
+  };
+
+  useEffect(() => {
+    totalfoodamount();
+  }, []);
 
   const orders = async () => {
+    console.log('Id', Id);
     const ref = firebase.database().ref('FoodOrders');
     const userData = JSON.parse(await AsyncStorage.getItem('AdminUser'));
     await ref.on('value', snapshot => {
       const formattedData = snapshot.val() || {};
+      console.log('formated', formattedData);
       const filteredOrders = Object.keys(formattedData)
-        .filter(
-          key => formattedData[key].RestaurantId === `${userData.AccessToken}`,
-        )
+        .filter(key => formattedData[key].RestaurantId === `${Id}`)
         .map(key => ({key, ...formattedData[key]}))
         .filter(
           order =>
@@ -60,12 +84,31 @@ const SubOrder = ({navigation}) => {
               'DD MM YYYY',
             ) === moment(selectedDate).format('DD MM YYYY'),
         )
+
         .filter(order =>
           currentTab === 'new'
             ? order.orderStatus !== 'Delivered'
             : order.orderStatus === 'Delivered',
         );
+      console.log('filterorders', filteredOrders);
+      console.log(moment(selectedDate).format('DD'));
+      console.log(
+        moment('16 Jul 2024,10:14 am', 'DD MMM YYYY,hh:mm a').format('DD'),
+      );
+
       setOrderlist(filteredOrders);
+      const newone = filteredOrders
+        .reduce((total, item) => total + item.TotalPrice, 0)
+        .toFixed(2);
+
+      console.log('filtered data', newone);
+      console.log(filteredOrders);
+      console.log(moment(selectedDate).format('DD'));
+      setTotalAmount(newone);
+      //   const neworderCount=filteredOrders.reduce((total,item)=>total+item.T,0)
+
+      //   const delivercount=
+      setnewordercount(filteredOrders.length);
     });
   };
 
@@ -152,13 +195,10 @@ const SubOrder = ({navigation}) => {
         onConfirm={handleConfirm}
         onCancel={hideDatePicker}
       />
-
       <FlatList
         data={orderlist}
         keyExtractor={item => item.key}
         renderItem={({item}) => (
-          // <TouchableOpacity
-          //    >
           <View
             style={{
               borderWidth: 0,
@@ -200,20 +240,6 @@ const SubOrder = ({navigation}) => {
                 </View>
               )}
             />
-            <TouchableOpacity
-              onPress={() =>
-                navigation.navigate('OrderDetailView', {Id: item.CustomerId})
-              }>
-              <Text
-                style={{
-                  fontSize: 16,
-                  color: 'black',
-                  marginRight: 10,
-                  alignSelf: 'flex-end',
-                }}>
-                See user Detail
-              </Text>
-            </TouchableOpacity>
             <Text style={styles.orderStatus}>
               {item?.orderStatus || 'Ordered'}
             </Text>
@@ -227,10 +253,22 @@ const SubOrder = ({navigation}) => {
               <Text style={styles.deliverButtonText}>Delivered</Text>
             </TouchableOpacity>
           </View>
-          // </TouchableOpacity>
         )}
       />
+      <View
+        style={{
+          height: 100,
+          backgroundColor: Colors.orange,
 
+          justifyContent: 'center',
+        }}>
+        <Text style={{color: 'white', fontSize: 18, marginLeft: 20}}>
+          Total Amount {TotalAmount}
+        </Text>
+        <Text style={{color: 'white', fontSize: 18, marginLeft: 20}}>
+          New Order count {newordercount}
+        </Text>
+      </View>
       <Modal
         transparent={true}
         animationType="slide"
@@ -453,4 +491,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SubOrder;
+export default Adminorders;

@@ -20,8 +20,10 @@ const AdminDashboard = ({navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleLogout = async () => {
-    // await AsyncStorage.removeItem('userToken');
-    navigation.navigate('Login');
+    // Add your logout logic here
+    // navigation.navigate('AdminLogin');
+    await AsyncStorage.removeItem('AdminUser');
+    navigation.replace('AdminLogin');
   };
 
   const handleOrderStatus = () => {
@@ -57,7 +59,7 @@ const AdminDashboard = ({navigation}) => {
       />
       <View style={styles.container}>
         <View style={styles.topContainer}>
-          <TouchableOpacity style={styles.button} onPress={handleOrderStatus}>
+          {/* <TouchableOpacity style={styles.button} onPress={handleOrderStatus}>
             <FontAwesome5
               style={{marginTop: 35}}
               name="box-open"
@@ -65,7 +67,7 @@ const AdminDashboard = ({navigation}) => {
               color="black"
             />
             <Text style={styles.buttonText}>Orders</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity
             style={styles.button}
             onPress={handleStockAvailability}>
@@ -75,7 +77,7 @@ const AdminDashboard = ({navigation}) => {
               size={50}
               color="black"
             />
-            <Text style={styles.buttonText}>Availability</Text>
+            <Text style={styles.buttonText}>Restaurants</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.bottomContainer}>
@@ -86,9 +88,9 @@ const AdminDashboard = ({navigation}) => {
               size={50}
               color="black"
             />
-            <Text style={styles.buttonText}>Token</Text>
+            <Text style={styles.buttonText}>Add Restaurant</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={handleLogout}>
+          {/* <TouchableOpacity style={styles.button} onPress={handleLogout}>
             <FontAwesome5
               style={{marginTop: 35}}
               name="sign-out-alt"
@@ -96,7 +98,7 @@ const AdminDashboard = ({navigation}) => {
               color="black"
             />
             <Text style={styles.buttonText}>Logout</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
       <Modal

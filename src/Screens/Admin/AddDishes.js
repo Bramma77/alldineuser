@@ -8,6 +8,8 @@ import {
   Touchable,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {launchCamera, launchImageLibrary} from 'react-native-image-picker';
 import storage from '@react-native-firebase/storage';
@@ -15,6 +17,7 @@ import database from '@react-native-firebase/database';
 import Colors from '../../Utilities/Colors';
 import Fonts from '../../Utilities/Fonts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import AvailabilityFood from './AvailabilityFood';
 
 const AddDishes = ({route, navigation}) => {
   // const {AccessToken} = route.params;
@@ -26,6 +29,7 @@ const AddDishes = ({route, navigation}) => {
   const [ImageUri, setImageUri] = useState(null);
   const [AccessToken, setAccessToken] = useState(false);
   const [isVeg, setIsVeg] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const onChangevalue = (text, value) => {
     if (value === 'Dishname') setDishesname(text);
@@ -93,6 +97,7 @@ const AddDishes = ({route, navigation}) => {
   };
 
   const uploadimg = () => {
+    setLoading(true);
     // setLoader(true)
     uploadImage(ImageUri)
       .then(downloadUrls => {
@@ -102,6 +107,7 @@ const AddDishes = ({route, navigation}) => {
       })
       .catch(error => {
         console.error('Error uploading images:', error);
+        Alert.alert(`Error ${error}`);
       });
   };
 
@@ -112,6 +118,7 @@ const AddDishes = ({route, navigation}) => {
         DishPrice: DishesPrice,
         DishType: DishesType,
         DishPreparationType: PreparationTime,
+        Availability: 'Available',
         DishesImage: downloadUrls || ImageUri,
         isVeg: isVeg, // Add isVeg property
       };
@@ -123,9 +130,13 @@ const AddDishes = ({route, navigation}) => {
       if (dishId) {
         await ref.child(dishId).update(data);
         console.log('Update successfully');
+        Alert.alert('Added Success');
+        setLoading(false);
       } else {
         await ref.push(data);
         console.log('Added successfully');
+        Alert.alert('Added Success');
+        setLoading(false);
       }
       navigation.goBack();
     } catch (error) {
@@ -167,86 +178,94 @@ const AddDishes = ({route, navigation}) => {
 
   return (
     <View style={{flex: 1}}>
-      <ScrollView style={{margin: 20}}>
-        <View
-          style={{
-            height: 200,
-            width: 200,
-            borderWidth: 1,
-            borderRadius: 10,
-            padding: 10,
-            alignSelf: 'center',
-          }}>
-          {ImageUri != null && (
-            <Image
-              source={{uri: ImageUri}}
-              style={{height: '100%', width: '100%'}}
-            />
-          )}
+      {loading ? (
+        <View style={{}}>
+          <ActivityIndicator size="large" color={Colors.orange} />
         </View>
-        <TouchableOpacity style={styles.Button} onPress={selectImage}>
-          <Text style={{fontSize: 16, fontFamily: Fonts.Light, color: 'white'}}>
-            Choose Image
-          </Text>
-        </TouchableOpacity>
-        <Text style={styles.Text}>Enter Dish name</Text>
-        <TextInput
-          style={styles.TextInput}
-          onChangeText={text => onChangevalue(text, 'Dishname')}
-          value={Dishesname}
-        />
-        <Text style={styles.Text}>Enter Dish Price</Text>
-        <TextInput
-          style={styles.TextInput}
-          onChangeText={text => onChangevalue(text, 'DishPrice')}
-          value={DishesPrice}
-          keyboardType="numeric"
-        />
-        <Text style={styles.Text}>Choose Dish Type</Text>
-        <View style={styles.dishTypeContainer}>
-          <TouchableOpacity
-            style={[
-              styles.dishTypeButton,
-              DishesType === 'Veg' && styles.selectedDishType,
-            ]}
-            onPress={() => selectDishType('Veg')}>
-            <Text style={styles.dishTypeText}>Veg</Text>
+      ) : (
+        <ScrollView style={{margin: 20}}>
+          <View
+            style={{
+              height: 200,
+              width: 200,
+              borderWidth: 1,
+              borderRadius: 10,
+              padding: 10,
+              alignSelf: 'center',
+            }}>
+            {ImageUri != null && (
+              <Image
+                source={{uri: ImageUri}}
+                style={{height: '100%', width: '100%'}}
+              />
+            )}
+          </View>
+          <TouchableOpacity style={styles.Button} onPress={selectImage}>
+            <Text
+              style={{fontSize: 16, fontFamily: Fonts.Light, color: 'white'}}>
+              Choose Image
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.dishTypeButton,
-              DishesType === 'Non-Veg' && styles.selectedDishType,
-            ]}
-            onPress={() => selectDishType('Non-Veg')}>
-            <Text style={styles.dishTypeText}>Non-Veg</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={styles.Text}>Enter Dish Preparation Time</Text>
-        <TextInput
-          style={styles.TextInput}
-          onChangeText={text => onChangevalue(text, 'PreparationTime')}
-          value={PreparationTime}
-          keyboardType="numeric"
-        />
+          <Text style={styles.Text}>Enter Dish name</Text>
+          <TextInput
+            style={styles.TextInput}
+            onChangeText={text => onChangevalue(text, 'Dishname')}
+            value={Dishesname}
+          />
+          <Text style={styles.Text}>Enter Dish Price</Text>
+          <TextInput
+            style={styles.TextInput}
+            onChangeText={text => onChangevalue(text, 'DishPrice')}
+            value={DishesPrice}
+            keyboardType="numeric"
+          />
+          <Text style={styles.Text}>Choose Dish Type</Text>
+          <View style={styles.dishTypeContainer}>
+            <TouchableOpacity
+              style={[
+                styles.dishTypeButton,
+                DishesType === 'Veg' && styles.selectedDishType,
+              ]}
+              onPress={() => selectDishType('Veg')}>
+              <Text style={styles.dishTypeText}>Veg</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.dishTypeButton,
+                DishesType === 'Non-Veg' && styles.selectedDishType,
+              ]}
+              onPress={() => selectDishType('Non-Veg')}>
+              <Text style={styles.dishTypeText}>Non-Veg</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.Text}>Enter Dish Preparation Time</Text>
+          <TextInput
+            style={styles.TextInput}
+            onChangeText={text => onChangevalue(text, 'PreparationTime')}
+            value={PreparationTime}
+            keyboardType="numeric"
+          />
 
-        <TouchableOpacity
-          onPress={uploadimg}
-          style={{
-            height: 50,
-            width: 100,
-            marginTop: 20,
-            borderRadius: 10,
-            backgroundColor: Colors.orange,
-            borderWidth: 1,
-            alignItems: 'center',
-            alignSelf: 'center',
-            justifyContent: 'center',
-          }}>
-          <Text style={{fontSize: 16, color: 'white', fontFamily: Fonts.Bold}}>
-            Submit
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity
+            onPress={uploadimg}
+            style={{
+              height: 50,
+              width: 100,
+              marginTop: 20,
+              borderRadius: 10,
+              backgroundColor: Colors.orange,
+              borderWidth: 1,
+              alignItems: 'center',
+              alignSelf: 'center',
+              justifyContent: 'center',
+            }}>
+            <Text
+              style={{fontSize: 16, color: 'white', fontFamily: Fonts.Bold}}>
+              Submit
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      )}
     </View>
   );
 };

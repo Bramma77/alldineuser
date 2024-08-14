@@ -1,14 +1,12 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
-  Animated,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
   Modal,
-  Alert, // Import Alert from react-native
+  Alert,
 } from 'react-native';
 import {
   responsiveHeight,
@@ -19,95 +17,8 @@ import Fonts from '../Utilities/Fonts';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import moment from 'moment';
 import auth from '@react-native-firebase/auth';
-import database from '@react-native-firebase/database'; // Import Firebase Realtime Database
-
-const AnimatedTextInput = ({
-  label,
-  value,
-  editable,
-  onChangeText,
-  keyboardType,
-  onPress,
-  maxLength,
-}) => {
-  if (editable === undefined) {
-    editable = false;
-  }
-
-  if (onPress === undefined) {
-    onPress = null;
-  }
-
-  const [isFocused, setIsFocused] = useState(false);
-  const animatedIsFocused = useRef(new Animated.Value(value ? 1 : 0)).current;
-
-  useEffect(() => {
-    if (value) {
-      setIsFocused(true);
-      Animated.timing(animatedIsFocused, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    }
-  }, [value]);
-
-  const handleFocus = () => {
-    setIsFocused(true);
-    Animated.timing(animatedIsFocused, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  };
-
-  const handleBlur = () => {
-    if (!value) {
-      setIsFocused(false);
-      Animated.timing(animatedIsFocused, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: false,
-      }).start();
-    }
-  };
-
-  const labelStyle = {
-    position: 'absolute',
-    left: 10,
-    top: animatedIsFocused.interpolate({
-      inputRange: [0, 1],
-      outputRange: [18, -10],
-    }),
-    fontSize: animatedIsFocused.interpolate({
-      inputRange: [0, 1],
-      outputRange: [16, 12],
-    }),
-    color: 'gray',
-    backgroundColor: 'white',
-    paddingHorizontal: 2,
-  };
-
-  return (
-    <TouchableOpacity
-      onPress={editable && onPress ? onPress : null}
-      activeOpacity={editable ? 0.5 : 1}>
-      <View style={styles.input}>
-        <Animated.Text style={labelStyle}>{label}</Animated.Text>
-        <TextInput
-          style={styles.text}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
-          onChangeText={onChangeText}
-          value={value}
-          editable={editable && !onPress}
-          keyboardType={keyboardType}
-          maxLength={maxLength}
-        />
-      </View>
-    </TouchableOpacity>
-  );
-};
+import database from '@react-native-firebase/database';
+import AnimatedTextInput from './AnimatedTextInput'; // Ensure correct path
 
 const EditProfile = ({navigation}) => {
   const [editable, setEditable] = useState(false);
@@ -121,12 +32,12 @@ const EditProfile = ({navigation}) => {
   const [initialProfileData, setInitialProfileData] = useState(null);
   const [isGenderModalVisible, setIsGenderModalVisible] = useState(false);
   const [isDatePickerVisible, setDatePickerVisible] = useState(false);
-  const currentuser = auth().currentUser?.uid;
+  const currentUser = auth().currentUser?.uid;
 
   useEffect(() => {
     const loadProfileData = async () => {
       try {
-        const userRef = database().ref(`usersList/${currentuser}`);
+        const userRef = database().ref(`usersList/${currentUser}`);
         userRef.on('value', snapshot => {
           if (snapshot.exists()) {
             const userData = snapshot.val();
@@ -145,31 +56,12 @@ const EditProfile = ({navigation}) => {
     setEditable(true);
   };
 
-  // const handleUpdate = async () => {
-  //   try {
-  //     await database().ref(`usersList/${currentuser}`).set(profileData);
-  //     setInitialProfileData(profileData);
-  //     setEditable(false);
-  //     navigation.goBack();
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  //   if (validateEmail(profileData.email)) {
-  //     // Logic to save profile data (e.g., update Firebase)
-  //     Alert.alert('Success', 'Profile updated successfully!');
-  //   } else {
-  //     Alert.alert('Invalid Email', 'Please enter a valid email address.');
-  //   }
-  // };
-
   const handleUpdate = async () => {
-    // Check if there are any changes
     if (JSON.stringify(profileData) === JSON.stringify(initialProfileData)) {
       Alert.alert('No Changes', 'No changes were made to update.');
       return;
     }
 
-    // Validate email first
     if (!validateEmail(profileData.email)) {
       Alert.alert('Invalid Email', 'Please enter a valid email address.');
       return;
@@ -184,17 +76,10 @@ const EditProfile = ({navigation}) => {
     }
 
     try {
-      // Update profile data in Firebase
-      await database().ref(`usersList/${currentuser}`).set(profileData);
-
-      // Update initial profile data and set editable to false
+      await database().ref(`usersList/${currentUser}`).set(profileData);
       setInitialProfileData(profileData);
       setEditable(false);
-
-      // Navigate back after successful update
       navigation.navigate('Profile');
-
-      // Show success message after updating profile
       Alert.alert('Success', 'Profile updated successfully!');
     } catch (error) {
       console.log(error);
@@ -202,19 +87,9 @@ const EditProfile = ({navigation}) => {
     }
   };
 
-  // const handleChange = (key, value) => {
-  //   // Limit mobile number to 10 digits
-  //   if (key === 'mobile' && value.length > 10) {
-  //     value = value.slice(0, 10);
-  //   }
-  //   setProfileData({...profileData, [key]: value});
-  // };
   const handleChange = (key, value) => {
-    if (key === 'mobile') {
-      // Limit to 10 digits
-      if (value.length > 10) {
-        value = value.slice(0, 10);
-      }
+    if (key === 'mobile' && value.length > 10) {
+      value = value.slice(0, 10);
     }
     setProfileData({...profileData, [key]: value});
   };
@@ -223,15 +98,12 @@ const EditProfile = ({navigation}) => {
     setProfileData({...profileData, email: text});
   };
 
-  // Function to validate email format
   const validateEmail = email => {
-    // Regular expression for email validation
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regex.test(email);
   };
 
   const validateMobile = mobile => {
-    // Regular expression for 10-digit mobile number validation
     const regex = /^\d{10}$/;
     return regex.test(mobile);
   };
@@ -263,11 +135,7 @@ const EditProfile = ({navigation}) => {
   };
 
   return (
-    <ScrollView
-      style={{
-        flex: 1,
-        backgroundColor: '#f3f3f3',
-      }}>
+    <ScrollView style={{flex: 1, backgroundColor: 'white'}}>
       <View style={styles.container}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>
@@ -289,9 +157,8 @@ const EditProfile = ({navigation}) => {
           editable={editable}
           onChangeText={text => handleChange('mobile', text)}
           keyboardType="numeric"
-          maxLength={10} // Limit to 10 digits
+          maxLength={10}
         />
-
         <AnimatedTextInput
           label="Email"
           value={profileData.email}
@@ -373,7 +240,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 10,
-    elevation: 10,
+    elevation: 0,
   },
   avatar: {
     width: 100,

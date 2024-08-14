@@ -47,6 +47,7 @@ const AdminLogin = ({navigation}) => {
     // const ref = database().ref(`Admindashboard/FcmToken/`);
     // const snapshot = await ref.once('value');
     // const data = snapshot.val();
+    console.log('token', token);
     try {
       const ref = firebase
         .database()
@@ -56,15 +57,15 @@ const AdminLogin = ({navigation}) => {
       // Check if data already exists
       ref.on('value', async snapshot => {
         console.log(snapshot);
-        if (!snapshot.exists()) {
-          // Data does not exist, so set it
-          await ref.set(token);
-          //  ToastAndroid.show('Added Success', ToastAndroid.SHORT);
-        } else {
-          // Data already exists
-          console.log(`Data already exists for userid: ${AccessToken}`);
-          // ToastAndroid.show('Token existed', ToastAndroid.SHORT);
-        }
+        // if (!snapshot.exists()) {
+        // Data does not exist, so set it
+        await ref.set(token);
+        //  ToastAndroid.show('Added Success', ToastAndroid.SHORT);
+        // } else {
+        // Data already exists
+        console.log(`Data already exists for userid: ${AccessToken}`);
+        // ToastAndroid.show('Token existed', ToastAndroid.SHORT);
+        // }
       });
     } catch (error) {
       console.log(error);
@@ -82,7 +83,7 @@ const AdminLogin = ({navigation}) => {
         if (data) {
           const token = await messaging().getToken();
           AdminFcmToken(token);
-
+          console.log('Fcm', token);
           await AsyncStorage.setItem(
             'AdminUser',
             JSON.stringify({AccessToken}),
@@ -97,6 +98,7 @@ const AdminLogin = ({navigation}) => {
         }
       }
       if (AccessToken === '000000') {
+        await AsyncStorage.setItem('AdminUser', JSON.stringify({AccessToken}));
         navigation.navigate('AdminDashboard');
         console.log('fail to login');
       }

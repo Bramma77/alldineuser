@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   StyleSheet,
   View,
@@ -9,13 +9,15 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from 'react-native';
 // import PagerView from 'react-native-pager-view';
 // import DrawerNavigator from "../navigation/DrawerNavigator";
-import {useNavigation} from '@react-navigation/native';
+import {CommonActions, useNavigation} from '@react-navigation/native';
 import PhoneInput from 'react-native-phone-number-input';
 import Colors from '../Utilities/Colors';
 import {useCart} from '../Provider/Provider';
+import auth from '@react-native-firebase/auth';
 // import { Commonheight, Commonsize, Commonwidth } from '../utils/CommonDimensions';
 
 const OTP = ({route}) => {
@@ -29,6 +31,38 @@ const OTP = ({route}) => {
   const inputRefs = useRef([]);
   const {confirm} = useCart();
 
+  //const currentUser = auth().currentUser;
+
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(async user => {
+      if (user && user.uid) {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 1,
+            routes: [{name: 'Drawer'}],
+          }),
+        );
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // function onAuthStateChanged() {
+  //   const currentUser = auth().currentUser;
+  //   console.log('auth changed', currentUser);
+  //   if (currentUser) {
+
+  //     navigation.dispatch(
+  //       CommonActions.reset({
+  //         index: 1,
+  //         routes: [{name: 'Drawer'}],
+  //       }),
+  //     );
+  //   }}
+
   async function confirmCode() {
     console.log(otp);
     try {
@@ -38,8 +72,15 @@ const OTP = ({route}) => {
       await confirm.confirm(numberString);
       console.log('Phone number verified!');
       // navigation.navigate('EditProfile');
-      navigation.navigate('Drawer');
+      //navigation.navigate('Drawer');
+      // navigation.dispatch(
+      //   CommonActions.reset({
+      //     index: 1,
+      //     routes: [{name: 'Drawer'}],
+      //   }),
+      // );
     } catch (error) {
+      Alert.alert('Error', 'Invalid OTP: ' + error);
       console.log('Invalid code.');
     }
   }

@@ -41,9 +41,11 @@ const SubAdminDashboard = ({navigation}) => {
 
   const [modalVisible, setModalVisible] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     // Add your logout logic here
-    navigation.navigate('AdminLogin');
+    // navigation.navigate('AdminLogin');
+    await AsyncStorage.removeItem('AdminUser');
+    navigation.replace('AdminLogin');
   };
 
   return (
@@ -102,7 +104,7 @@ const SubAdminDashboard = ({navigation}) => {
               size={50}
               color="black"
             />
-            <Text style={styles.buttonText}>Sub-Admin</Text>
+            <Text style={styles.buttonText}>Restaurant Info</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -202,10 +204,10 @@ const styles = StyleSheet.create({
   },
   titles: {
     fontSize: 18,
-    fontFamily: Fonts.Bold,
+    fontFamily: Fonts.Medium,
     flex: 1,
-    textAlign: 'center',
-    color: Colors.orange,
+
+    color: 'black',
   },
   iconContainers: {
     position: 'absolute',

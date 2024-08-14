@@ -10,20 +10,37 @@ import {
   responsiveWidth,
 } from 'react-native-responsive-dimensions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {database, getWishlist} from './addtoWishlist';
+
 import {useCart} from '../Provider/Provider';
+import database from '@react-native-firebase/database';
 
 const Restaurants = ({item, onPress}) => {
   const [isHeartFilled, setIsHeartFilled] = useState(false);
   const [Dataview, setDataview] = useState([]);
-  const {Wishlistdata, getResponseWishlist} = useCart();
+  const [review, setreview] = useState([]);
+
+  const {Wishlistdata, getResponseWishlist, addtowish, removeFromWishlist} =
+    useCart();
 
   useEffect(() => {
     // if (item && item.Dishes) {
 
     //  setDataview(formattedData);
+    reviewdata();
     finaldata();
   }, []);
+
+  const reviewdata = async () => {
+    await database()
+      .ref('reviews')
+      .on('value', snapshot => {
+        const items = snapshot.val() ? Object.entries(snapshot.val()) : [];
+        const formattedData = items.map(([key, value]) => ({key, ...value}));
+
+        setreview(formattedData);
+        console.log('formatdata', formattedData);
+      });
+  };
 
   const finaldata = () => {
     // console.log('fianldata', item);
@@ -36,19 +53,45 @@ const Restaurants = ({item, onPress}) => {
       setDataview(formattedData);
     }
   };
+  // const getRatingForHotel = hotel_id => {
+  //   const review1 = review.find(review => review.hotel_id === hotel_id);
+  //   // console.log('review1', review1);
+  //   //  console.log(review1);
+  //   return review1 ? review1.rating : '1.0';
+  // };
+  const getRatingForHotel = hotel_id => {
+    // Find all reviews for the specified hotel
+    const hotelReviews = review.filter(review => review.hotel_id === hotel_id);
 
+    if (hotelReviews.length === 0) {
+      return '1.0';
+    }
+
+    // Extract ratings from those reviews
+    const ratings = hotelReviews.map(review => review.rating);
+
+    // Calculate total sum of ratings
+    const totalRating = ratings.reduce((sum, rating) => sum + rating, 0);
+
+    // Calculate average rating
+    const averageRating = totalRating / ratings.length;
+
+    return averageRating.toFixed(1); // Return average rating rounded to one decimal place
+  };
   return (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity onPress={onPress} activeOpacity={7}>
       <View style={styles.container}>
         <Image style={styles.image} source={{uri: item.DownloadUrl}} />
         <TouchableOpacity
           style={styles.heartIcon}
           onPress={async () => {
             if (Wishlistdata?.includes(item.key)) {
-              await database.removeFromWishlist(item.key);
+              await removeFromWishlist(item.key);
+              // database.removeFromWishlist(item.key);
               // getResponseWishlist();
             } else {
-              await database.addtowish(item.key);
+              await addtowish(item.key);
+              // await database.addtowish(item.key);
               // getResponseWishlist();
             }
           }}>
@@ -73,8 +116,11 @@ const Restaurants = ({item, onPress}) => {
           <Text numberOfLines={2} style={styles.headerText}>
             {item.Restaurantname}
           </Text>
+
           <View style={styles.ratingContainer}>
-            <Text style={styles.ratingText}>4.5</Text>
+            <Text style={styles.ratingText}>
+              {getRatingForHotel(item.Token)}
+            </Text>
             <FontAwesome name={'star'} size={12} color={'white'} />
           </View>
         </View>

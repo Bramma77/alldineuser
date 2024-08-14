@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   FlatList,
   Alert,
+  Modal,
+  Button,
   StyleSheet,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -18,8 +20,14 @@ import {
 import {useCart} from '../Provider/Provider';
 import database from '@react-native-firebase/database';
 import Restaurants from '../Component/Restaurants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import auth from '@react-native-firebase/auth';
+import moment from 'moment';
+import AntDesign from 'react-native-vector-icons/AntDesign';
 
 const Orderscreen = ({navigation}) => {
+  const [modalVisible, setModalVisible] = useState(false);
   const {
     cart,
     setCart,
@@ -29,12 +37,32 @@ const Orderscreen = ({navigation}) => {
     clearCart,
     CurrentUser,
     getorderlist,
+    removeFromCart,
+    ResLocation,
   } = useCart();
+  const [check, setcheck] = useState('DineIn');
 
   const totalPrice = cart?.items?.reduce(
     (sum, item) => sum + item.DishPrice * item.Quantity,
     0,
   );
+
+  const reference = database().ref('Users');
+  const checkIfUidExists = uid => {
+    return new Promise((resolve, reject) => {
+      database()
+        .ref('usersList/' + uid)
+        .once('value')
+        .then(snapshot => {
+          const exists = snapshot.val() !== null;
+          console.log(exists);
+          resolve(exists);
+        })
+        .catch(error => {
+          reject(error);
+        });
+    });
+  };
 
   const sendPushNotification = async data => {
     try {
@@ -61,12 +89,24 @@ const Orderscreen = ({navigation}) => {
         //Alert.alert('Notification Sent');
       } else {
         console.error('Failed to send push notification:', response.statusText);
-        Alert.alert('Failed to send notification');
+        //Alert.alert('Failed to send notification');
       }
     } catch (error) {
       console.error('Error sending push notification:', error);
       Alert.alert('Failed to send notification');
     }
+  };
+  const checkPayment = () => {
+    const user = auth().currentUser.uid;
+    checkIfUidExists(user).then(exists => {
+      if (exists) {
+        Proceedtopay();
+        console.log(exists);
+      } else {
+        //Alert.alert('Please fill profile information');
+        setModalVisible(true);
+      }
+    });
   };
 
   const Proceedtopay = async () => {
@@ -74,18 +114,21 @@ const Orderscreen = ({navigation}) => {
       const fcmref = database().ref(`Admindashboard/FcmToken/${ResId}`);
       const snapshot = await fcmref.once('value');
       const data = snapshot.val();
+
       const orderData = {
         CustomerId: CurrentUser,
         RestaurantId: ResId,
+        Location: ResLocation,
         Dishes: cart,
         TotalPrice: totalPrice,
-        OrderTime: Date.now(),
+        Orderoption: check,
+        OrderTime: `${moment(Date.now()).format(`DD MMM YYYY,hh:mm a`)}`,
       };
       const ref = database().ref(`FoodOrders`);
       await ref.push(orderData);
       sendPushNotification(data);
       clearCart();
-      getorderlist();
+      getorderlist(CurrentUser);
       Alert.alert('Success', 'Order placed successfully', [
         {text: 'OK', onPress: () => navigation.navigate('Home')},
       ]);
@@ -113,14 +156,29 @@ const Orderscreen = ({navigation}) => {
       }),
     };
     setCart(newCart);
-    await AsyncStorage.setItem(`cart-${CurrentUser}`, JSON.stringify(newCart));
-    getCartItemCount();
+    await AsyncStorage.setItem(`cart`, JSON.stringify(newCart));
+    //getCartItemCount();
   };
+
+  const openModal = () => {
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+  // const newcart = cart.items.length > 2 ? cart.items : cart.items;
 
   const renderItem = ({item}) => (
     <View style={styles.itemContainer}>
       <Image source={{uri: item.DishesImage}} style={styles.dishImage} />
-      <Text style={styles.dishName}>{item.DishName}</Text>
+      <View>
+        <Text style={[styles.dishName, {fontSize: 16, fontFamily: Fonts.Bold}]}>
+          {item?.restaurantname}
+        </Text>
+        <Text style={styles.dishName}>{item.DishName}</Text>
+        <Text style={styles.dishPrice}>₹ {item.Quantity * item.DishPrice}</Text>
+      </View>
       <View style={styles.quantityContainer}>
         <TouchableOpacity onPress={() => decreaseQuantity(item.key)}>
           <Text style={styles.quantityButton}>-</Text>
@@ -130,7 +188,14 @@ const Orderscreen = ({navigation}) => {
           <Text style={styles.quantityButton}>+</Text>
         </TouchableOpacity>
       </View>
-      <Text style={styles.dishPrice}>₹ {item.Quantity * item.DishPrice}</Text>
+      <TouchableOpacity onPress={() => removeFromCart(item.key)}>
+        <MaterialCommunityIcons
+          name="delete"
+          size={20}
+          color={Colors.orange}
+          style={{marginLeft: 10}}
+        />
+      </TouchableOpacity>
     </View>
   );
 
@@ -140,6 +205,7 @@ const Orderscreen = ({navigation}) => {
         <Text style={styles.addMoreText}>Add more items</Text>
         <Ionicons name="add-circle-outline" size={24} color="black" />
       </View> */}
+
       <View style={styles.borderLine} />
       <Text style={styles.billDetailsText}>Bill Details</Text>
       <View style={styles.billContainer}>
@@ -152,6 +218,41 @@ const Orderscreen = ({navigation}) => {
           <Text style={styles.billText}>To Pay</Text>
           <Text style={styles.billText}>₹ {totalPrice}</Text>
         </View>
+        <View style={styles.billRow}>
+          <View style={{flexDirection: 'row'}}>
+            <TouchableOpacity
+              onPress={() => setcheck('DineIn')}
+              style={{
+                height: 20,
+                width: 20,
+                borderWidth: 1,
+              }}>
+              <AntDesign
+                name="check"
+                size={18}
+                color={check === 'DineIn' ? 'green' : 'transparent'}
+              />
+            </TouchableOpacity>
+            <Text style={styles.billText}>Dine-In</Text>
+          </View>
+          <View style={{flexDirection: 'row'}}>
+            <TouchableOpacity
+              onPress={() => setcheck('TakeAway')}
+              style={{
+                height: 20,
+                width: 20,
+                borderWidth: 1,
+              }}>
+              <AntDesign
+                name="check"
+                size={18}
+                color={check === 'TakeAway' ? 'green' : 'transparent'}
+              />
+            </TouchableOpacity>
+            <Text style={styles.billText}>Take Away</Text>
+          </View>
+        </View>
+        <View style={styles.billRow}></View>
       </View>
     </View>
   );
@@ -167,6 +268,54 @@ const Orderscreen = ({navigation}) => {
           <Text style={styles.clearCartText}>Clear Cart</Text>
         </TouchableOpacity>
       </View>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: 'rgba(0,0,0,0.5)',
+          }}>
+          <View
+            style={{
+              width: 300,
+              backgroundColor: 'white',
+              borderRadius: 10,
+              padding: 20,
+              alignItems: 'center',
+            }}>
+            <Text
+              style={{
+                fontSize: 16,
+                color: 'black',
+                marginBottom: 20,
+                fontFamily: Fonts.Regular,
+              }}>
+              Please fill profile information
+            </Text>
+            <View
+              style={{
+                // flexDirection: 'row',
+                width: '100%',
+                // justifyContent: 'space-between',
+                paddingHorizontal: 20,
+                alignItems: 'center',
+              }}>
+              {/* <Button
+                title="Cancel"
+                color={Colors.orange}
+                onPress={closeModal}
+              /> */}
+              <Button title="OK" color={Colors.orange} onPress={closeModal} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <FlatList
         data={cart.items}
         keyExtractor={item => item.key}
@@ -177,7 +326,7 @@ const Orderscreen = ({navigation}) => {
         <Text style={styles.totalText}>Total: ₹ {totalPrice}</Text>
         <TouchableOpacity
           style={styles.placeOrderButton}
-          onPress={Proceedtopay}>
+          onPress={checkPayment}>
           <Text style={styles.placeOrderText}>Place Order</Text>
         </TouchableOpacity>
       </View>
@@ -206,7 +355,7 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    //justifyContent: 'space-between',
     alignItems: 'center',
     padding: responsiveHeight(2),
   },
@@ -220,6 +369,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.SemiBold,
     width: responsiveWidth(35),
+    marginLeft: 20,
+    borderWidth: 0,
     marginHorizontal: responsiveWidth(1.5),
   },
   quantityContainer: {
@@ -245,8 +396,9 @@ const styles = StyleSheet.create({
   },
   dishPrice: {
     color: 'black',
-    fontFamily: Fonts.Regular,
+    //  fontFamily: Fonts.Regular,
     fontSize: 14,
+    marginLeft: 20,
     marginHorizontal: responsiveWidth(1.5),
   },
   addMoreContainer: {
